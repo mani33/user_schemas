@@ -1,6 +1,6 @@
 %{
 rf.MapAvgParams (lookup) # my newest table
-min_lag = 30: smallint unsigned # minimum lag for temporal averaging of maps
+min_lag = 40: smallint unsigned # minimum lag for temporal averaging of maps
 max_lag = 100: smallint unsigned # minimum lag for temporal averaging of maps
 -----
 

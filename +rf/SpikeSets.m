@@ -9,22 +9,23 @@ rf.SpikeSets (computed) # my newest table
 classdef SpikeSets < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
-        table = dj.Table('rf.SpikeSets')
-    end
-    properties
-        popRel = rf.Phys * rf.SpikeWinParams  % !!! update the populate relation
+        table = dj.Table('rf.SpikeSets');
+        popRel = rf.Phys * rf.SpikeWinParams;  % !!! update the populate relation
     end
     
     methods
         function self = SpikeSets(varargin)
             self.restrict(varargin)
         end
-        
+    end
+    methods(Access = protected)
         function makeTuples(self, key)
             %!!! compute missing fields for key here
             self.insert(key)
             makeTuples(rf.TrialSpikes,key)
         end
+    end
+    methods
         
         function plotMaps(self,varargin)
             
@@ -39,7 +40,7 @@ classdef SpikeSets < dj.Relvar & dj.AutoPopulate
             all_mapTypes = [md.map_type_num];
             map_type_num = unique(all_mapTypes);
             map_type_str = fetchn(rf.MapTypes(sprintf('map_type_num in %s',...
-            util.array2csvStr(map_type_num))),'map_type');
+                util.array2csvStr(map_type_num))),'map_type');
             nMapTypes = length(map_type_num);
             nLags = length(lags);
             c = 0;

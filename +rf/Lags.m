@@ -1,5 +1,5 @@
 %{
-rf.Lags (lookup) # different lags you want to compute receptive field map by reverse corr
+rf.Lags (lookup) # different lags you want to compute rf map by reverse corr
 
 lag: smallint unsigned # lag in msec
 -----

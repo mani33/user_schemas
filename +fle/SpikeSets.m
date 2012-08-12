@@ -13,8 +13,6 @@ classdef SpikeSets < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
         table = dj.Table('fle.SpikeSets')
-    end
-    properties
         popRel = fle.Phys * fle.SpikeWinParams;
     end
     
@@ -22,14 +20,16 @@ classdef SpikeSets < dj.Relvar & dj.AutoPopulate
         function self = SpikeSets(varargin)
             self.restrict(varargin)
         end
-        
+    end
+    methods(Access = protected)
         function makeTuples(self, key)
             %!!! compute missing fields for key here
             self.insert(key)
             % Populate subtables
             makeTuples(fle.SubTrialSpikes,key)
         end
-        
+    end
+    methods
         function [mfr_dir0 mfr_dir1] = getDirSelResp(self,dx,resp_win_start,resp_win_end)
             % function dsi = getDirSelInd(self,dx,resp_win_start,resp_win_end)
             
@@ -162,13 +162,13 @@ classdef SpikeSets < dj.Relvar & dj.AutoPopulate
                 stsRv = fle.SubTrialSpikes(key) & fle.SubTrials(cs);
                 plotSpikes(stsRv,'axes',ax,'titStr',condStr{iCond});
                 
-%                 if cond(currCondIdx).is_moving
-%                     rfLocInd = getCenter(fle.FlashRf(key));
-%                     dx = cond(currCondIdx).dx;
-%                     direction = cond(currCondIdx).direction;
-%                     zeroTimePoint = getTrajRelTimeAtFlashLoc(fle.TrialGroup(key),rfLocInd,dx,direction,misAlignTol);
-%                     plot(zeroTimePoint,0,'b*');
-%                 end
+                %                 if cond(currCondIdx).is_moving
+                %                     rfLocInd = getCenter(fle.FlashRf(key));
+                %                     dx = cond(currCondIdx).dx;
+                %                     direction = cond(currCondIdx).direction;
+                %                     zeroTimePoint = getTrajRelTimeAtFlashLoc(fle.TrialGroup(key),rfLocInd,dx,direction,misAlignTol);
+                %                     plot(zeroTimePoint,0,'b*');
+                %                 end
             end
         end
     end

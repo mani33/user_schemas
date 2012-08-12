@@ -10,11 +10,9 @@ flebm.TrialGroup (computed) # my newest table
 classdef TrialGroup < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
-        table = dj.Table('flebm.TrialGroup')
-    end
-    properties
+        table = dj.Table('flebm.TrialGroup')    
         popRel = (stimulation.StimTrialGroup - acq.StimulationIgnore) & ...
-            acq.Stimulation('exp_type like ''FlashLagExperiment'' and correct_trials >= 500')...
+            acq.Stimulation('exp_type in ("FlashLagExperiment","TrialBasedExperiment") and (correct_trials + incorrect_trials)> 500')...
             - acq.SessionsIgnore;
     end
     
@@ -22,7 +20,8 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
         function self = TrialGroup(varargin)
             self.restrict(varargin)
         end
-        
+    end
+    methods (Access=protected)        
         function makeTuples(self, key)
             %!!! compute missing fields for key here
             self.insert(key)

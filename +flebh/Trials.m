@@ -1,42 +1,42 @@
 %{
 flebh.Trials (computed) # my newest table
+
 -> flebh.TrialGroup
-trial_num   : int   # trial number
------
-acquire_fixation_time    : smallint unsigned # blah
-bar_locations=Null       : blob # bla
-condition                : smallint unsigned # blah
-correct_response         : boolean # blah
-delay_time               : double # time before the monkey cannot respond
-eye_control              : boolean # blah
-eye_params               : blob # blah
-fixation_radius          : smallint unsigned # blah
-flash_duration           : smallint unsigned # flash duration frames
-flash_location           : smallint # blah
-flash_offset             : smallint # blah
-flash_rect=Null          : tinyblob # blah
-hold_fixation_time       : smallint unsigned # blah
-intertrial_time          : double # blah
-lag_prob                 : double # lagging prob
-move_dir=Null            : smallint unsigned # blah
-move_prob                : smallint unsigned # blah
-moving_location = Null   : smallint unsigned # blah
-response_time            : double # blah
-speed                    : smallint unsigned # blah
-swap_times=Null          : blob # blah
-sync=Null                : blob # blah
-trajectory_angle         : smallint # blah
-trajectory_center_x      : smallint # blah
-trajectory_center_y      : smallint # blah
-trajectory_length         : smallint # blah
-valid_trial              : boolean # blah
-flash_bar_color_r        : smallint unsigned             # red component of rgb
-flash_bar_color_g        : smallint unsigned             # green component of rgb
-flash_bar_color_b        : smallint unsigned             # blue component of rgb
-mov_bar_color_r          : smallint unsigned             # red component of rgb
-mov_bar_color_g          : smallint unsigned             # green component of rgb
-mov_bar_color_b          : smallint unsigned             # blue component of rgb
-flash_center_y              : smallint unsigned             # y distance for flash center
+trial_num       : int                   # trial number
+---
+acquire_fixation_time       : smallint unsigned             # blah
+bar_locations=null          : blob                          # bla
+condition                   : smallint unsigned             # blah
+correct_response            : tinyint                       # blah
+delay_time                  : double                        # time before the monkey cannot respond
+eye_control                 : tinyint                       # blah
+eye_params                  : blob                          # blah
+fixation_radius             : smallint unsigned             # blah
+flash_duration=null         : smallint unsigned             # flash duration frames
+flash_location              : smallint                      # blah
+flash_offset                : smallint                      # blah
+flash_rect=null             : tinyblob                      # blah
+hold_fixation_time          : smallint unsigned             # blah
+intertrial_time             : double                        # blah
+lag_prob                    : double                        # lagging prob
+move_dir=null               : smallint unsigned             # blah
+move_prob                   : smallint unsigned             # blah
+moving_location=null        : smallint unsigned             # blah
+response_time               : double                        # blah
+speed                       : smallint unsigned             # blah
+swap_times=null             : blob                          # blah
+sync=null                   : blob                          # blah
+trajectory_angle=0          : smallint                      # in deg
+trajectory_center_x         : smallint                      # blah
+trajectory_center_y         : smallint                      # blah
+trajectory_length           : smallint                      # blah
+valid_trial                 : tinyint                       # blah
+flash_bar_color_r           : smallint unsigned             # red component of rgb
+flash_bar_color_g           : smallint unsigned             # green component of rgb
+flash_bar_color_b           : smallint unsigned             # blue component of rgb
+mov_bar_color_r             : smallint unsigned             # red component of rgb
+mov_bar_color_g             : smallint unsigned             # green component of rgb
+mov_bar_color_b             : smallint unsigned             # blue component of rgb
 %}
 
 classdef Trials < dj.Relvar
@@ -55,7 +55,7 @@ classdef Trials < dj.Relvar
             
             tp = fetch(stimulation.StimTrials(key),'trial_params');
             cp = fetch1(stimulation.StimTrialGroup(key),'stim_constants');
-            cond = fetch1(stimulation.StimConditions(key),'*');
+            cond = fetch(stimulation.StimConditions(key),'*');
             tp = [tp.trial_params];
             nTrials = length(tp);
             tuples = repmat(key,nTrials,1);
@@ -67,12 +67,14 @@ classdef Trials < dj.Relvar
                 tuples(iTrial).correct_response = tp(iTrial).correctResponse;
                 
                 tuples(iTrial).delay_time = tp(iTrial).delayTime;
-                tuples(iTrial).exp_mode = tp(iTrial).expMode;
+%                 tuples(iTrial).exp_mode = tp(iTrial).expMode;
                 tuples(iTrial).eye_control = tp(iTrial).eyeControl;
                 tuples(iTrial).eye_params = tp(iTrial).eyeParams;
                 tuples(iTrial).fixation_radius = tp(iTrial).fixationRadius;
                 
+                if isfield(tp,'flashDuration')
                 tuples(iTrial).flash_duration = tp(iTrial).flashDuration;
+                end
                 tuples(iTrial).flash_location = tp(iTrial).flashLocation;
                 tuples(iTrial).flash_offset = tp(iTrial).flashOffset;
                 tuples(iTrial).flash_rect = tp(iTrial).flashRect;
@@ -126,8 +128,9 @@ classdef Trials < dj.Relvar
 
                 tuples(iTrial).swap_times = tp(iTrial).swapTimes;
                 tuples(iTrial).sync = tp(iTrial).sync;
-                tuples(iTrial).trajectory_angle = tp(iTrial).trajectoryAngle;
-                
+                if isfield(tp,'trajectoryAngle')
+                    tuples(iTrial).trajectory_angle = tp(iTrial).trajectoryAngle;
+                end
                 tuples(iTrial).valid_trial = tp(iTrial).validTrial;
             end
             self.insert(tuples)

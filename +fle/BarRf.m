@@ -18,9 +18,6 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
         table = dj.Table('fle.BarRf')
-    end
-    
-    properties
         popRel = fle.BinnedSpikeSets * fle.SpikeBinParams * fle.BarRfParams;
     end
     
@@ -28,7 +25,8 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
         function self = BarRf(varargin)
             self.restrict(varargin)
         end
-        
+    end
+    methods(Access = protected)
         function makeTuples(self, key)
             k = fetch(fle.StimConstants(key),'bar_size_x','bar_size_y','stim_center_x',...
                 'stim_center_y','combined');
@@ -94,9 +92,9 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             key.map = permute(mean(sp,1),[3 2 1]) * 1000/key.bin_width;
             self.insert(key);
         end
-        
-        
-        
+    end
+    
+    methods
         function [peakInd SNR] = getCenter(self,varargin)
             
             args.nStdForSig = 0.5; % number of standard deviations to cover signal
@@ -312,7 +310,7 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             args.resp_win_start = 50;
             args.xAxisInDeg = true;
             args.resp_win_end = 120;
-            args.FontSize = 14;
+            args.FontSize = 8;
             args = parseVarArgs(args,varargin{:});
             
             % open new figure window or plot in existing one?
@@ -342,7 +340,7 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             set(c,'FontSize',args.FontSize);
             set(gca,'FontSize',args.FontSize);
             
-            
+            pixPerDeg = fetch1(vstim.PixPerDeg(self),'pix_per_deg');
             % Change x axis units to degrees
             if args.xAxisInDeg
                 % Get the real bar position in degrees
@@ -351,12 +349,12 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
                 
                 distX = p.flash_centers(1,:)- mp.monitor_center_x;
                 distX = distX(1:3:end);
-                xDeg = pixels2degrees(distX, mp.monitor_distance, mp.resolution_x, ...
-                    mp.monitor_size_x);
-                
-                xDeg = round(xDeg * 100)/100;
-                
-                set(mh,'XTick',x(1:3:end),'XTickLabel',xDeg);
+%                 xDeg = pixels2degrees(distX, mp.monitor_distance, mp.resolution_x, ...
+%                     mp.monitor_size_x);
+                xDeg = distX/pixPerDeg;
+                xDeg = arrayfun(@(x) sprintf('%0.1f',x),xDeg,'uni',false);
+                dis = round(length(x)/5);
+                set(mh,'XTick',x(1:dis:end),'XTickLabel',xDeg);
             end
             
             % return handle?

@@ -35,15 +35,13 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
             makeTuples(flevbl.SubTrials,key)
             
         end
-        function [zeroTimePoint misAlignPixUsed] = getTrajRelTimeAtFlashLoc(self,flashLocation,dx,direction,misAlignTol)
+        function [zeroTimePoint misAlignPixUsed] = getTrajRelTimeAtFlashLoc(self,flashLocation,dx,direction,barLum)
             
             if isnan(flashLocation)
                 zeroTimePoint = NaN;
                 return;
             end
-            if nargin < 5
-                misAlignTol = 0;
-            end
+            misAlignTol = 0;
             
             zeroTimePoint = nan;
             
@@ -55,15 +53,16 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
                 return
             end 
             
-            movCond = find([c.is_moving] & [c.dx]==dx & [c.direction]==direction,1);
-            flashCond = find([c.flash_location] == flashLocation,1);
+            movCond = find([c.bar_color_r]==barLum & [c.is_moving] & [c.dx]==dx & ...
+                [c.direction]==direction,1);
+            flashCond = find([c.bar_color_r]==barLum & [c.flash_location]== flashLocation,1);
             sc = fetch(flevbl.StimConstants(key), 'stim_center_x');
-            % Get one subTrial with this condition
             
+            % Get one subTrial with this condition
             md = fetch(flevbl.SubTrials(key,sprintf('cond_idx = %u',movCond)),'bar_locations',1);
             fd = fetch(flevbl.SubTrials(key,sprintf('cond_idx = %u',flashCond)),'flash_centers',1);
             
-            T = fetch1(flevbl.RefreshPeriod(self),'refresh_period_msec'); 
+            T = fetch1(stim.RefreshPeriod(self),'refresh_period_msec'); 
             movBarLoc = md.bar_locations{:};
             flashLoc = fd.flash_centers{:}(1) - sc.stim_center_x;
             

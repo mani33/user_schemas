@@ -95,7 +95,7 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             self.insert(key)
         end
         
-       function diaDeg = getSize(self,mahalDist)
+        function diaDeg = getSize(self,mahalDist)
             %         function diaDeg = getSize(self,mahalDist)
             if nargin < 2
                 mahalDist = 1;
@@ -119,8 +119,8 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
         end
         
         function [ox oy] = getOutline(self,mahalDist)
-%       function [ox oy] = getOutline(self,mahalDist)
-
+            %       function [ox oy] = getOutline(self,mahalDist)
+            
             if nargin < 2
                 mahalDist = 1;
             end
@@ -155,6 +155,7 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             arg.smooth = 5;
             arg.axis = [];
             arg.mahalDist = 1;
+            arg.outlineOnly = false;
             arg = parseVarArgs(arg,varargin{:});
             
             % get all map data
@@ -175,8 +176,11 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             map = imfilter(md.map,w,'same');
             
             % plot map
-            h = imagesc(x,y,map);
-            hold on
+            if ~arg.outlineOnly
+                h = imagesc(x,y,map);
+                hold on
+            end
+            
             if size(map,1)==size(map,2)
                 PlotTools.sqAx;
             end
@@ -186,17 +190,23 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             if nargout
                 varargout{1} = h;
             end
-            % plot meridians
-            plot(xlim,[0 0],'w');
-            plot([0 0],ylim,'w');
             
-            hold on
+            if ~arg.outlineOnly
+                % plot meridians
+                plot(xlim,[0 0],'w');
+                plot([0 0],ylim,'w');
+                hold on
+            end
             % Plot outline of receptive field now.
             [ox oy] = getOutline(self,arg.mahalDist);
-            plot(ox,oy,'w');
+            if ~arg.outlineOnly
+                plot(ox,oy,'w');
+            else
+                plot(ox,oy,'k')
+            end
         end
     end
-        
+    
     methods(Static)
         
         function z = gauss(par,xy)

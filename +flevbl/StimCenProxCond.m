@@ -9,6 +9,11 @@ mov_in_rf = 0: tinyint # was mov in rf
 flash_shown = 0: tinyint # blah
 mov_shown = 0: tinyint # blah
 direction = -1: tinyint # movement direction
+bar_color_r : tinyint unsigned # red
+bar_color_g : tinyint unsigned # green
+bar_color_b : tinyint unsigned # blue
+is_init=0   : boolean # is flash initiated condtion
+is_stop=0   : boolean # is flash terminated condtion
 dx = Null : smallint unsigned # change in pixels per frame
 %}
 
@@ -30,7 +35,6 @@ classdef StimCenProxCond < dj.Relvar & dj.AutoPopulate
             
             % For a flash or moving bar condition, find the arrangement where the given stimulus was
             % close to the stim center
-            
             
             cond = fetch(flevbl.StimCond(key),'*');
             nCond = length(cond);
@@ -54,9 +58,13 @@ classdef StimCenProxCond < dj.Relvar & dj.AutoPopulate
                     tuples(iCond).arr_rf_in = cond(iCond).arrangement;
                     tuples(iCond).direction = cond(iCond).direction;
                     tuples(iCond).dx = cond(iCond).dx;
+                    tuples(iCond).bar_color_r = cond(iCond).bar_color_r;
+                    tuples(iCond).bar_color_g = cond(iCond).bar_color_g;
+                    tuples(iCond).bar_color_b = cond(iCond).bar_color_b;
+                    tuples(iCond).is_init = cond(iCond).is_init;
+                    tuples(iCond).is_stop = cond(iCond).is_stop;
                 end
             else
-                
                 stimCenY = fetch1(flevbl.StimConstants(key),'stim_center_y');
                 for iCond = 1:nCond
                     % Find the arrangement for the given condition and find the other
@@ -111,6 +119,11 @@ classdef StimCenProxCond < dj.Relvar & dj.AutoPopulate
                     tuples(iCond).cond_idx = ct.cond_idx;
                     tuples(iCond).direction = ct.direction;
                     tuples(iCond).dx = ct.dx;
+                    tuples(iCond).bar_color_r = cond(iCond).bar_color_r;
+                    tuples(iCond).bar_color_g = cond(iCond).bar_color_g;
+                    tuples(iCond).bar_color_b = cond(iCond).bar_color_b;
+                    tuples(iCond).is_init = cond(iCond).is_init;
+                    tuples(iCond).is_stop = cond(iCond).is_stop;
                 end
             end
             %!!! compute missing fields for key here

@@ -11,8 +11,7 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
         table = dj.Table('fle.TrialGroup')
-    end
-    properties
+       
         popRel = (stimulation.StimTrialGroup - acq.StimulationIgnore) & ephys.Spikes &...
             acq.Stimulation('exp_type like ''FlePhys%Experiment'' and correct_trials >= 300')...
             - acq.SessionsIgnore;
@@ -22,7 +21,8 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
         function self = TrialGroup(varargin)
             self.restrict(varargin)
         end
-        
+    end
+    methods(Access=protected)
         function makeTuples(self, key)
             %!!! compute missing fields for key here
             self.insert(key)
@@ -34,6 +34,8 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
             makeTuples(fle.SubTrials,key)
             
         end
+    end
+    methods
         function [zeroTimePoint misAlignPixUsed] = getTrajRelTimeAtFlashLoc(self,flashLocation,dx,direction,misAlignTol)
             
             if isnan(flashLocation)

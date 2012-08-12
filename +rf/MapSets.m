@@ -9,8 +9,6 @@ classdef MapSets < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
         table = dj.Table('rf.MapSets')
-    end
-    properties
         popRel = rf.SpikeSets('pre_stim_time=300 and post_stim_time=300')
     end
     
@@ -18,7 +16,8 @@ classdef MapSets < dj.Relvar & dj.AutoPopulate
         function self = MapSets(varargin)
             self.restrict(varargin)
         end
-        
+    end
+    methods(Access = protected)
         function makeTuples(self, key)
             %!!! compute missing fields for key here
             self.insert(key)
@@ -26,7 +25,8 @@ classdef MapSets < dj.Relvar & dj.AutoPopulate
             makeTuples(rf.Map,key);
             makeTuples(rf.MapAvg,key);
         end
-        
+    end
+    methods
         function plot(self,varargin)
             
             figure

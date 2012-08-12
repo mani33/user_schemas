@@ -11,8 +11,6 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
         table = dj.Table('rf.TrialGroup')
-    end
-    properties
         popRel = (stimulation.StimTrialGroup-acq.StimulationIgnore) & ephys.Spikes &...
             acq.Stimulation('exp_type =''DotMappingExperiment'' and correct_trials >= 100')...
             - acq.SessionsIgnore;
@@ -22,7 +20,8 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
         function self = TrialGroup(varargin)
             self.restrict(varargin)
         end
-        
+    end
+    methods(Access = protected)
         function makeTuples(self, key)
             %!!! compute missing fields for key here
             self.insert(key)
@@ -31,7 +30,8 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
             makeTuples(rf.StimConstants,key)
             makeTuples(rf.Trials,key)
         end
-        
+    end
+    methods
         function varargout = plotMapForTetArray(self,xLim,yLim)
             
             if nargin < 2

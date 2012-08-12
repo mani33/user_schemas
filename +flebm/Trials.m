@@ -1,41 +1,42 @@
 %{
 flebm.Trials (computed) # my newest table
+
 -> flebm.TrialGroup
-trial_num   : int   # trial number
------
-acquire_fixation_time    : smallint unsigned # blah
-bar_locations=Null       : blob # bla
-condition                : smallint unsigned # blah
-correct_response         : boolean # blah
-delay_time               : double # time before the monkey cannot respond
-exp_mode                 : boolean # blah
-eye_control              : boolean # blah
-eye_params               : blob # blah
-fixation_radius          : smallint unsigned # blah
-flash_duration           : smallint unsigned # flash duration frames
-flash_location           : smallint # blah
-flash_offset             : smallint # blah
-flash_rect=Null          : tinyblob # blah
-hold_fixation_time       : smallint unsigned # blah
-intertrial_time          : double # blah
-lag_prob                 : double # lagging prob
-max_block_size           : smallint unsigned # number of correct trials before reward
-move_dir=Null            : smallint unsigned # blah
-move_prob                : smallint unsigned # blah
-moving_location = Null   : smallint unsigned # blah
-no_flash_zone            : smallint unsigned # blah
-perceived_lag            : smallint unsigned # blah
-rand_location            : boolean # blah
-response_time            : double # blah
-reward_amount            : double # blah
-speed                    : smallint unsigned # blah
-swap_times=Null          : blob # blah
-sync=Null                : blob # blah
-trajectory_angle         : smallint # blah
-trajectory_center_x      : smallint # blah
-trajectory_center_y      : smallint # blah
-trajectory_length         : smallint # blah
-valid_trial              : boolean # blah
+trial_num       : int                   # trial number
+---
+acquire_fixation_time       : smallint unsigned             # blah
+bar_locations=null          : blob                          # bla
+condition                   : smallint unsigned             # blah
+correct_response            : tinyint                       # blah
+delay_time                  : double                        # time before the monkey cannot respond
+exp_mode                    : tinyint                       # blah
+eye_control=null            : tinyint                       # blah
+eye_params=null             : blob                          # blah
+fixation_radius=null        : int unsigned                  # blah
+flash_duration              : smallint unsigned             # flash duration frames
+flash_location              : smallint                      # blah
+flash_offset                : smallint                      # blah
+flash_rect=null             : tinyblob                      # blah
+hold_fixation_time          : smallint unsigned             # blah
+intertrial_time             : double                        # blah
+lag_prob                    : double                        # lagging prob
+max_block_size              : smallint unsigned             # number of correct trials before reward
+move_dir=null               : smallint unsigned             # blah
+move_prob                   : smallint unsigned             # blah
+moving_location=null        : int                           # blah
+no_flash_zone               : smallint unsigned             # blah
+perceived_lag               : int                           # blah
+rand_location               : tinyint                       # blah
+response_time               : double                        # blah
+reward_amount               : double                        # blah
+speed                       : smallint unsigned             # blah
+swap_times=null             : blob                          # blah
+sync=null                   : blob                          # blah
+trajectory_angle            : smallint                      # blah
+trajectory_center_x         : smallint                      # blah
+trajectory_center_y         : smallint                      # blah
+trajectory_length           : smallint                      # blah
+valid_trial                 : tinyint                       # blah
 %}
 
 classdef Trials < dj.Relvar
@@ -56,7 +57,16 @@ classdef Trials < dj.Relvar
             tp = [tp.trial_params];
             nTrials = length(tp);
             tuples = repmat(key,nTrials,1);
+            selFields =  {'moveDir','movingLocation','flashRect','barLocations'};
+            nF = length(selFields);
             for iTrial = 1:nTrials
+                for iField = 1:nF
+                    cF = selFields{iField};
+                    if isempty(tp(iTrial).(cF))
+                        tp(iTrial).(cF) = NaN;
+                    end
+                end
+                
                 tuples(iTrial).trial_num = iTrial;
                 tuples(iTrial).acquire_fixation_time = tp(iTrial).acquireFixationTime;
                 tuples(iTrial).bar_locations = tp(iTrial).barLocations;
@@ -65,9 +75,15 @@ classdef Trials < dj.Relvar
                 
                 tuples(iTrial).delay_time = tp(iTrial).delayTime;
                 tuples(iTrial).exp_mode = tp(iTrial).expMode;
-                tuples(iTrial).eye_control = tp(iTrial).eyeControl;
-                tuples(iTrial).eye_params = tp(iTrial).eyeParams;
-                tuples(iTrial).fixation_radius = tp(iTrial).fixationRadius;
+                if isfield(tp(iTrial),'eyeControl')
+                    tuples(iTrial).eye_control = tp(iTrial).eyeControl;
+                end
+                if isfield(tp(iTrial),'eyeParams')
+                    tuples(iTrial).eye_params = tp(iTrial).eyeParams;
+                end
+                if isfield(tp(iTrial),'fixationRadius')
+                    tuples(iTrial).fixation_radius = tp(iTrial).fixationRadius;
+                end
                 
                 tuples(iTrial).flash_duration = tp(iTrial).flashDuration;
                 tuples(iTrial).flash_location = tp(iTrial).flashLocation;
@@ -78,6 +94,7 @@ classdef Trials < dj.Relvar
                 tuples(iTrial).intertrial_time = tp(iTrial).intertrialTime;
                 tuples(iTrial).lag_prob = tp(iTrial).lagProb;
                 tuples(iTrial).max_block_size = tp(iTrial).maxBlockSize;
+                
                 tuples(iTrial).move_dir = tp(iTrial).moveDir;
                 tuples(iTrial).move_prob = tp(iTrial).moveProb;
                 

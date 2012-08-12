@@ -27,7 +27,7 @@ classdef Map < dj.Relvar
             dotColors = fetch1(rf.StimConstants(key),'dot_color');
             dotColorBright = max(dotColors);
             dotColorDark = min(dotColors);
-            T = fetch1(stim.RefreshPeriod(key),'refresh_period_msec');
+            T = fetch1(vstim.RefreshPeriod(key),'refresh_period_msec');
             stimCenter = [fetch1(rf.StimConstants(key),'stim_center_x') ...
                 fetch1(rf.StimConstants(key),'stim_center_y')];
             [dot_num_x dot_num_y] = fetchn(rf.StimConstants(key),'dot_num_x','dot_num_y');
@@ -190,13 +190,14 @@ classdef Map < dj.Relvar
             %   [xGrid yGrid] = getGrid(self,'deg')
             
             d = fetch(rf.StimConstants(fetch(self)),'*');
-            pxPerDeg = tan(pi / 180) * d.monitor_distance / d.monitor_size_x * d.resolution_x;
+%             pixPerDeg = tan(pi / 180) * d.monitor_distance / d.monitor_size_x * d.resolution_x;
+            pixPerDeg = fetch1(vstim.PixPerDeg(fetch(self)),'pix_per_deg');
             xGrid = d.stim_center_x +((1:d.dot_num_x) - ceil(d.dot_num_x/2)) * d.dot_size;
             yGrid = d.stim_center_y +((1:d.dot_num_y) - ceil(d.dot_num_y/2)) * d.dot_size;
             
             if strcmp(gridUnit,'deg')
-                xGrid = (xGrid - d.monitor_center_x)/pxPerDeg;
-                yGrid = (yGrid - d.monitor_center_y)/pxPerDeg;
+                xGrid = (xGrid - d.monitor_center_x)/pixPerDeg;
+                yGrid = (yGrid - d.monitor_center_y)/pixPerDeg;
             end
         end
         

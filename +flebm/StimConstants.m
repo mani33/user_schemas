@@ -19,7 +19,7 @@ monitor_center_x            : smallint unsigned             # no comments
 monitor_center_y            : smallint unsigned             # no comments
 flash_offsets               : blob                          # blah
 offset_threshold            : smallint                      # blah
-flash_locations             : blob                          # blah
+flash_locations=null        : blob                          # blah
 bar_color_r                 : smallint unsigned             # red component of rgb
 bar_color_g                 : smallint unsigned             # green component of rgb
 bar_color_b                 : smallint unsigned             # blue component of rgb
@@ -33,8 +33,8 @@ luminance_table=null        : mediumblob                    # lum tab
 hostname=null               : varchar(250)                  # blah
 start_time                  : double                        # no comments
 end_time                    : double                        # no comments
-folder                      : varchar(250)                  # no comments
-date = Null                 : date                          # datevalue
+folder=null                 : varchar(250)                  # blah
+date=null                   : date                          # datevalue
 %}
 
 classdef StimConstants < dj.Relvar
@@ -57,13 +57,29 @@ classdef StimConstants < dj.Relvar
             key.fix_spot_color = c.fixSpotColor;
             key.fix_spot_location = c.fixSpotLocation;
             key.fix_spot_size = c.fixSpotSize;
+            if ~isfield(c,'monitorSize')
+                c.monitorSize = [41 30];
+                disp('Monitor size of [41 30]cm was assumed !');
+            end
             key.monitor_size_x = c.monitorSize(1);
             key.monitor_size_y = c.monitorSize(2);
+            
+            if ~isfield(c,'monitorDistance')
+                if strcmp(c.subject,'Hulk')
+                    c.monitorDistance = 107;
+                    disp('Monitor distance of 107 cm was assumed for Hulk!')
+                end
+            end
             key.monitor_distance = c.monitorDistance;
+            if ~isfield(c,'monitorCenter')
+                c.monitorCenter = [800 ;600];
+                disp('MonitorCenter of [800 600] was assumed!');
+            end
             key.monitor_center_x = c.monitorCenter(1);
             key.monitor_center_y = c.monitorCenter(2);
             key.flash_offsets = c.flashOffsets;
-            key.flash_locations = c.flashLocations;
+            key = util.addFieldIfExists(key,c,'flashLocations','flash_locations');
+            %             key.flash_locations = c.flashLocations;
             key.offset_threshold = c.offsetThreshold;
             key.bar_color_r = c.barColor(1);
             key.bar_color_g = c.barColor(2);
@@ -72,7 +88,7 @@ classdef StimConstants < dj.Relvar
             key.bar_size_y = c.barSize(2);
             key.fix_hold_time = c.fixHoldTime;
             if isfield(c,'date')
-            key.date = c.date(1:10);
+                key.date = c.date(1:10);
             end
             if isfield(c,'resolution')
                 key.resolution_x = c.resolution(1);
@@ -83,10 +99,10 @@ classdef StimConstants < dj.Relvar
             key = util.addFieldIfExists(key,c,'hostname');
             key.start_time = c.startTime;
             key.end_time = c.endTime;
-            key.folder = c.folder;
-            key = util.addFieldIfExists(key,c,'lightAdaptMin','lightAdaptMin');
+            key = util.addFieldIfExists(key,c,'folder','folder');
+            %             key.folder = c.folder;
             
-
+            
             self.insert(key)
         end
     end

@@ -7,7 +7,7 @@ fle.BarRfFit (computed) # my newest table
 -> fle.BarRfFitParams
 -----
 fit_params = Null: tinyblob # array of fitted parameters
-resid = Null: tinyblob # array of residuals of the fit
+resid = Null: mediumblob # array of residuals of the fit
 %}
 
 classdef BarRfFit < dj.Relvar & dj.AutoPopulate
@@ -15,8 +15,6 @@ classdef BarRfFit < dj.Relvar & dj.AutoPopulate
     properties(Constant)
         table = dj.Table('fle.BarRfFit')
         fit_fun = '@(b,x) b(1) + b(2) * exp(-(x - b(3)).^2 / (2*(b(4)^2)))';
-    end
-    properties
         popRel = fle.BarRf * fle.BarRfFitParams
     end
     
@@ -24,7 +22,8 @@ classdef BarRfFit < dj.Relvar & dj.AutoPopulate
         function self = BarRfFit(varargin)
             self.restrict(varargin)
         end
-        
+    end
+    methods(Access = protected)
         function makeTuples(self, key)
             
             d = fetch(fle.BarRf(key),'base');
@@ -43,7 +42,8 @@ classdef BarRfFit < dj.Relvar & dj.AutoPopulate
             
             self.insert(key)
         end
-        
+    end
+    methods
         function [b fn res] = getFitData(self)
             x = fetch(self,'fit_params','resid');
             b = x.fit_params;
