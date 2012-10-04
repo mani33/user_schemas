@@ -14,8 +14,6 @@ classdef BarRfFit < dj.Relvar & dj.AutoPopulate
     properties(Constant)
         table = dj.Table('flevbl.BarRfFit')
         fit_fun = '@(b,x) b(1) + b(2) * exp(-(x - b(3)).^2 / (2*(b(4)^2)))';
-    end
-    properties
         popRel = flevbl.BarRf;
     end
     
@@ -23,7 +21,8 @@ classdef BarRfFit < dj.Relvar & dj.AutoPopulate
         function self = BarRfFit(varargin)
             self.restrict(varargin)
         end
-        
+    end
+    methods(Access = protected)
         function makeTuples(self, key)
             
             d = fetch(flevbl.BarRf(key),'base');
@@ -46,7 +45,8 @@ classdef BarRfFit < dj.Relvar & dj.AutoPopulate
             end
             self.insert(key)
         end
-        
+    end
+    methods
         function [b fn res] = getFitData(self)
             x = fetch(self,'fit_params','resid');
             b = x.fit_params;
@@ -55,31 +55,31 @@ classdef BarRfFit < dj.Relvar & dj.AutoPopulate
         end
         
         function p = getSignificanceOfFit(self)
-             disp('Function needs revision')
-%             fd = fetch(self,'fit_params');
-%             rp = fetch(flevbl.BarRf(self),'flash_centers');
-%             r = getSpatialMap(flevbl.BarRf(self));
-%             r = r - mean(r);
-%             n = numel(r);
-%             
-%             % Test significance
-%             % ANOVA testing
-%             % Model: (yi-ym) = (yhat-ym) + (yi - yhat) => SST = SSM + SSE
-%             x = 1:length(rp.flash_centers);
-%             fn = str2func(self.fit_fun);
-%             rhat = fn(fd.fit_params,x);
-%             
-%             SSerror = sum((r - rhat).^2);
-%             SSmodel = sum((rhat - mean(r)).^2);
-%             dfm = 4;
-%             dfe = n - dfm;
-%             
-%             MSerror = SSerror / dfe;
-%             MSmodel = SSmodel / dfm;
-%             
-%             F = MSmodel / MSerror;
-%             
-%             p = 1 - fcdf(F,dfm,dfe);
+            disp('Function needs revision')
+            %             fd = fetch(self,'fit_params');
+            %             rp = fetch(flevbl.BarRf(self),'flash_centers');
+            %             r = getSpatialMap(flevbl.BarRf(self));
+            %             r = r - mean(r);
+            %             n = numel(r);
+            %
+            %             % Test significance
+            %             % ANOVA testing
+            %             % Model: (yi-ym) = (yhat-ym) + (yi - yhat) => SST = SSM + SSE
+            %             x = 1:length(rp.flash_centers);
+            %             fn = str2func(self.fit_fun);
+            %             rhat = fn(fd.fit_params,x);
+            %
+            %             SSerror = sum((r - rhat).^2);
+            %             SSmodel = sum((rhat - mean(r)).^2);
+            %             dfm = 4;
+            %             dfe = n - dfm;
+            %
+            %             MSerror = SSerror / dfe;
+            %             MSmodel = SSmodel / dfm;
+            %
+            %             F = MSmodel / MSerror;
+            %
+            %             p = 1 - fcdf(F,dfm,dfe);
         end
     end
     methods(Static)

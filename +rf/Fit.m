@@ -13,8 +13,6 @@ classdef Fit < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
         table = dj.Table('rf.Fit')
-    end
-    properties
         popRel = rf.Map  % !!! update the populate relation
     end
     
@@ -22,7 +20,8 @@ classdef Fit < dj.Relvar & dj.AutoPopulate
         function self = Fit(varargin)
             self.restrict(varargin)
         end
-        
+    end
+    methods(Access = protected)
         function makeTuples(self, key)
             
             map = fetch1(rf.Map(key),'map');
@@ -95,7 +94,8 @@ classdef Fit < dj.Relvar & dj.AutoPopulate
             key.residuals = residuals;
             self.insert(key)
         end
-        
+    end
+    methods
         function [ox oy] = getOutline(self,mahalDist)
             
             if nargin < 2
@@ -172,7 +172,7 @@ classdef Fit < dj.Relvar & dj.AutoPopulate
             plot(ox,oy,'w');
         end
         
-         function diaDeg = getSize(self,mahalDist)
+        function diaDeg = getSize(self,mahalDist)
             %         function diaDeg = getSize(self,mahalDist)
             if nargin < 2
                 mahalDist = 1;

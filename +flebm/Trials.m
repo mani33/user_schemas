@@ -37,6 +37,9 @@ trajectory_center_x         : smallint                      # blah
 trajectory_center_y         : smallint                      # blah
 trajectory_length           : smallint                      # blah
 valid_trial                 : tinyint                       # blah
+left_target=null            : tinyblob                      # left target location
+right_target=null           : tinyblob                      # right target location
+target_radius=null          : int unsigned                  # left target radius
 %}
 
 classdef Trials < dj.Relvar

@@ -1,6 +1,6 @@
 %{
 jobs.FleSpikeSets(manual)   # job to populate spike
--> fle.Phys
+-> flevbl.Phys
 <<JobFields>>
 %}
 

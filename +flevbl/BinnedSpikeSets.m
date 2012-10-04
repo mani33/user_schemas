@@ -1,5 +1,5 @@
 % flevbl.BinnedSpikeSets - my newest table
-% I will explain what my table does here 
+% I will explain what my table does here
 
 %{
 flevbl.BinnedSpikeSets (computed) # my newest table
@@ -10,26 +10,26 @@ binnedspikesets_ts = CURRENT_TIMESTAMP: timestamp  # do not edit
 %}
 
 classdef BinnedSpikeSets < dj.Relvar & dj.AutoPopulate
-
-	properties(Constant)
-		table = dj.Table('flevbl.BinnedSpikeSets')
-	end
-	properties
-		popRel = flevbl.Phys * flevbl.SpikeBinParams;  % !!! update the populate relation
-	end
-
-	methods
-		function self = BinnedSpikeSets(varargin)
-			self.restrict(varargin)
-		end
-
-		function makeTuples(self, key)
-		%!!! compute missing fields for key here
-			self.insert(key)
+    
+    properties(Constant)
+        table = dj.Table('flevbl.BinnedSpikeSets')
+        popRel = flevbl.Phys * flevbl.SpikeBinParams;  % !!! update the populate relation
+    end
+    
+    methods
+        function self = BinnedSpikeSets(varargin)
+            self.restrict(varargin)
+        end
+    end
+    methods(Access = protected)
+        function makeTuples(self, key)
+            %!!! compute missing fields for key here
+            self.insert(key)
             % Populate subtables
             makeTuples(flevbl.SubTrialSpikesBinned,key);
         end
-        
+    end
+    methods
         function binIndices = getBinIndicesForInterval(self,interval)
             % Return bin indices for given time interval.
             %   bins = getBinsForInterval(spikes,interval) where interval is a
@@ -43,5 +43,5 @@ classdef BinnedSpikeSets < dj.Relvar & dj.AutoPopulate
             binIndices = (fix(b(1)) + 1) : ceil(b(2));
         end
         
-	end
+    end
 end

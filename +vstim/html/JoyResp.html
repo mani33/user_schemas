@@ -1,0 +1,231 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>JoyResp</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2012-08-31"><meta name="DC.source" content="JoyResp.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="comment">%{
+</span><span class="comment">vstim.JoyResp (computed) # joystick response data
+</span><span class="comment">-&gt; vstim.TrialJoyTraces
+</span><span class="comment">
+</span><span class="comment">-----
+</span><span class="comment">resp_dir=null: tinyint # 0 or 1 (0-left, 1-right, -1 noresponse)
+</span><span class="comment">resp_dir_str=null: enum('right','left','no_response') # direction moved
+</span><span class="comment">reaction_time=null: double # reaction time
+</span><span class="comment">%}
+</span>
+<span class="keyword">classdef</span> JoyResp &lt; dj.Relvar &amp; dj.AutoPopulate
+
+	<span class="keyword">properties</span>(Constant)
+		table = dj.Table(<span class="string">'vstim.JoyResp'</span>)
+		popRel = vstim.TrialJoyTraces  <span class="comment">% !!! update the populate relation</span>
+	<span class="keyword">end</span>
+
+	<span class="keyword">methods</span>
+		<span class="keyword">function</span> self = JoyResp(varargin)
+			self.restrict(varargin)
+		<span class="keyword">end</span>
+	<span class="keyword">end</span>
+
+	<span class="keyword">methods</span>(Access=protected)
+
+		<span class="keyword">function</span> makeTuples(self, key)
+            tuple = key;
+            <span class="comment">%!!! compute missing fields for key here</span>
+            d = fetch(vstim.TrialJoyTraces(key),<span class="string">'*'</span>);
+            h = d.trace_h_volt;
+            gw = getGausswin(25,1000/d.sampling_rate);
+            hs = conv(h,gw,<span class="string">'same'</span>);
+            hs([1:20 end-20:end]) = NaN;
+            close <span class="string">all</span>
+            [flips flipSign] = util.detectFlips(hs,d.sampling_rate,1/0.5);
+            plot(h);
+            hold <span class="string">on</span>;
+            plot(flips,h(flips),<span class="string">'rO'</span>);shg
+
+            <span class="comment">% get baseline during the first 100 msec after stim onset</span>
+            rel_t = getRelTime(vstim.TrialJoyTraces(key));
+<span class="comment">%             ind = rel_t &gt; 0 &amp; rel_t &lt; 75;</span>
+<span class="comment">%             baseline = mean(h(ind));</span>
+<span class="comment">%             std_baseline = std(h(ind));</span>
+<span class="comment">%</span>
+<span class="comment">%             % get reaction time</span>
+<span class="comment">%             h_rt = h-baseline;</span>
+<span class="comment">%             h_rt(rel_t &lt; 0) = 0;</span>
+<span class="comment">%             tuple.reaction_time = rel_t(find(abs(h_rt) &gt; min(0.05,100*std_baseline),1,'first'));</span>
+            tuple.reaction_time = rel_t(flips(1));
+
+<span class="comment">%             hh = abs(h-baseline);</span>
+            <span class="keyword">if</span> flipSign(1) == 1
+                tuple.resp_dir_str = <span class="string">'right'</span>;
+                tuple.resp_dir = 1;
+            <span class="keyword">elseif</span> flipSign(1) == -1
+                tuple.resp_dir_str = <span class="string">'left'</span>;
+                tuple.resp_dir = 0;
+            <span class="keyword">else</span>
+                tuple.resp_dir_str = <span class="string">'no_response'</span>;
+                tuple.resp_dir = -1;
+            <span class="keyword">end</span>
+
+<span class="comment">%             th = 0.1; % volts change</span>
+<span class="comment">%             ns = round(0.6 * d.sampling_rate);</span>
+<span class="comment">%             pulse_start = find(hh &gt; th,1,'first');</span>
+<span class="comment">%             hh((pulse_start + ns):end) = 0;</span>
+<span class="comment">%             [~, pk_ind] = max(hh);</span>
+<span class="comment">%             pk_volt = h(pk_ind);</span>
+<span class="comment">%</span>
+<span class="comment">%             if pk_volt &gt; (baseline + th)</span>
+<span class="comment">%                 tuple.resp_dir_str = 'right';</span>
+<span class="comment">%                 tuple.resp_dir = 1;</span>
+<span class="comment">%             elseif pk_volt &lt; (baseline - th)</span>
+<span class="comment">%                 tuple.resp_dir_str = 'left';</span>
+<span class="comment">%                 tuple.resp_dir = 0;</span>
+<span class="comment">%             else</span>
+<span class="comment">%                 tuple.resp_dir_str = 'no_response';</span>
+<span class="comment">%                 tuple.resp_dir = -1;</span>
+<span class="comment">%             end</span>
+            self.insert(tuple)
+        <span class="keyword">end</span>
+	<span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%{
+vstim.JoyResp (computed) # joystick response data
+-> vstim.TrialJoyTraces
+
+REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+resp_dir=null: tinyint # 0 or 1 (0-left, 1-right, -1 noresponse)
+resp_dir_str=null: enum('right','left','no_response') # direction moved
+reaction_time=null: double # reaction time
+%}
+
+classdef JoyResp < dj.Relvar & dj.AutoPopulate
+
+	properties(Constant)
+		table = dj.Table('vstim.JoyResp')
+		popRel = vstim.TrialJoyTraces  % !!! update the populate relation
+	end
+
+	methods
+		function self = JoyResp(varargin)
+			self.restrict(varargin)
+		end
+	end
+
+	methods(Access=protected)
+
+		function makeTuples(self, key)
+            tuple = key;
+            %!!! compute missing fields for key here
+            d = fetch(vstim.TrialJoyTraces(key),'*');
+            h = d.trace_h_volt;
+            gw = getGausswin(25,1000/d.sampling_rate);
+            hs = conv(h,gw,'same');
+            hs([1:20 end-20:end]) = NaN;
+            close all
+            [flips flipSign] = util.detectFlips(hs,d.sampling_rate,1/0.5);
+            plot(h);
+            hold on;
+            plot(flips,h(flips),'rO');shg
+            
+            % get baseline during the first 100 msec after stim onset
+            rel_t = getRelTime(vstim.TrialJoyTraces(key));
+%             ind = rel_t > 0 & rel_t < 75;
+%             baseline = mean(h(ind));
+%             std_baseline = std(h(ind));
+%                          
+%             % get reaction time
+%             h_rt = h-baseline;
+%             h_rt(rel_t < 0) = 0;
+%             tuple.reaction_time = rel_t(find(abs(h_rt) > min(0.05,100*std_baseline),1,'first'));
+            tuple.reaction_time = rel_t(flips(1));
+            
+%             hh = abs(h-baseline);
+            if flipSign(1) == 1
+                tuple.resp_dir_str = 'right';
+                tuple.resp_dir = 1;
+            elseif flipSign(1) == -1
+                tuple.resp_dir_str = 'left';
+                tuple.resp_dir = 0;
+            else
+                tuple.resp_dir_str = 'no_response';
+                tuple.resp_dir = -1;
+            end
+
+%             th = 0.1; % volts change
+%             ns = round(0.6 * d.sampling_rate);
+%             pulse_start = find(hh > th,1,'first');
+%             hh((pulse_start + ns):end) = 0;
+%             [~, pk_ind] = max(hh);
+%             pk_volt = h(pk_ind);
+%             
+%             if pk_volt > (baseline + th)
+%                 tuple.resp_dir_str = 'right';
+%                 tuple.resp_dir = 1;
+%             elseif pk_volt < (baseline - th)
+%                 tuple.resp_dir_str = 'left';
+%                 tuple.resp_dir = 0;
+%             else
+%                 tuple.resp_dir_str = 'no_response';
+%                 tuple.resp_dir = -1;
+%             end
+            self.insert(tuple)
+        end
+	end
+end
+
+##### SOURCE END #####
+--></body></html>

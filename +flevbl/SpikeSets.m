@@ -13,8 +13,6 @@ classdef SpikeSets < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
         table = dj.Table('flevbl.SpikeSets')
-    end
-    properties
         popRel = flevbl.Phys * flevbl.SpikeWinParams;
     end
     
@@ -22,14 +20,16 @@ classdef SpikeSets < dj.Relvar & dj.AutoPopulate
         function self = SpikeSets(varargin)
             self.restrict(varargin)
         end
-        
+    end
+    methods(Access = protected)
         function makeTuples(self, key)
             %!!! compute missing fields for key here
             self.insert(key)
             % Populate subtables
             makeTuples(flevbl.SubTrialSpikes,key)
         end
-        
+    end
+    methods
         function [mfr_dir0 mfr_dir1] = getDirSelResp(self,dx,resp_win_start,resp_win_end)
             % function dsi = getDirSelInd(self,dx,resp_win_start,resp_win_end)
             
@@ -139,9 +139,7 @@ classdef SpikeSets < dj.Relvar & dj.AutoPopulate
             argList = struct2argList(arg);
             
             key = fetch(self);
-            misAlignTol = 10;
             
-            cond = fetch(flevbl.StimCond(key),'*');
             [condIdx condStr] = getSelCond(flevbl.TrialGroup(key),argList{:});
             nCond = length(condIdx);
             cc = 0;
@@ -162,13 +160,13 @@ classdef SpikeSets < dj.Relvar & dj.AutoPopulate
                 stsRv = flevbl.SubTrialSpikes(key) & flevbl.SubTrials(cs);
                 plotSpikes(stsRv,'axes',ax,'titStr',condStr{iCond});
                 
-%                 if cond(currCondIdx).is_moving
-%                     rfLocInd = getCenter(flevbl.FlashRf(key));
-%                     dx = cond(currCondIdx).dx;
-%                     direction = cond(currCondIdx).direction;
-%                     zeroTimePoint = getTrajRelTimeAtFlashLoc(flevbl.TrialGroup(key),rfLocInd,dx,direction,misAlignTol);
-%                     plot(zeroTimePoint,0,'b*');
-%                 end
+                %                 if cond(currCondIdx).is_moving
+                %                     rfLocInd = getCenter(flevbl.FlashRf(key));
+                %                     dx = cond(currCondIdx).dx;
+                %                     direction = cond(currCondIdx).direction;
+                %                     zeroTimePoint = getTrajRelTimeAtFlashLoc(flevbl.TrialGroup(key),rfLocInd,dx,direction,misAlignTol);
+                %                     plot(zeroTimePoint,0,'b*');
+                %                 end
             end
         end
     end

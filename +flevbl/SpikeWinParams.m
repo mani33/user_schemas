@@ -3,8 +3,8 @@
 
 %{
 flevbl.SpikeWinParams (lookup) # my newest table
-pre_stim_time = 300   : double          # Time to bin before alignment event
-post_stim_time = 300  : double          # Time after bin before alignment event
+pre_stim_time = 500   : double          # Time to bin before alignment event
+post_stim_time = 500  : double          # Time after bin before alignment event
 -----
 
 

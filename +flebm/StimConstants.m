@@ -35,6 +35,8 @@ start_time                  : double                        # no comments
 end_time                    : double                        # no comments
 folder=null                 : varchar(250)                  # blah
 date=null                   : date                          # datevalue
+target_location=null        : tinyblob                      # saccade target location
+target_color=null           : tinyblob                      # RGB color of target
 %}
 
 classdef StimConstants < dj.Relvar
@@ -97,12 +99,11 @@ classdef StimConstants < dj.Relvar
             key = util.addFieldIfExists(key,c,'gammaTable','gamma_table');
             key = util.addFieldIfExists(key,c,'luminanceTable','luminance_table');
             key = util.addFieldIfExists(key,c,'hostname');
+            key = util.addFieldIfExists(key,c,'targetLocation','target_location');
             key.start_time = c.startTime;
             key.end_time = c.endTime;
             key = util.addFieldIfExists(key,c,'folder','folder');
-            %             key.folder = c.folder;
-            
-            
+
             self.insert(key)
         end
     end

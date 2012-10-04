@@ -12,8 +12,6 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
         table = dj.Table('rf.FitAvg')
-    end
-    properties
         popRel = rf.MapAvg  % !!! update the populate relation
     end
     
@@ -21,7 +19,8 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
         function self = FitAvg(varargin)
             self.restrict(varargin)
         end
-        
+    end
+    methods(Access = protected)
         function makeTuples(self, key)
             
             map = fetch1(rf.MapAvg(key),'map');
@@ -94,7 +93,8 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             key.residuals = residuals;
             self.insert(key)
         end
-        
+    end
+    methods
         function diaDeg = getSize(self,mahalDist)
             %         function diaDeg = getSize(self,mahalDist)
             if nargin < 2

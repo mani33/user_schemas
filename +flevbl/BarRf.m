@@ -19,9 +19,6 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
         table = dj.Table('flevbl.BarRf')
-    end
-    
-    properties
         popRel = flevbl.BinnedSpikeSets * flevbl.SpikeBinParams * flevbl.BarRfParams * ...
             flevbl.BarGrayLevels;
     end
@@ -30,7 +27,8 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
         function self = BarRf(varargin)
             self.restrict(varargin)
         end
-        
+    end
+    methods(Access = protected)
         function makeTuples(self, key)
             k = fetch(flevbl.StimConstants(key),'bar_size_x','bar_size_y','combined');
             key.bar_size = [k.bar_size_x; k.bar_size_y];
@@ -82,9 +80,9 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             key.map = permute(mean(sp,1),[3 2 1]) * 1000/key.bin_width;
             self.insert(key);
         end
-        
-        
-        
+    end
+    
+    methods
         function [peakInd SNR] = getCenter(self,varargin)
             
             args.nStdForSig = 0.5; % number of standard deviations to cover signal
@@ -102,7 +100,7 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             nUnits = length(p);
             peakInd = nan(1,nUnits);
             SNR = nan(1,nUnits);
-           
+            
             fp = fetch(flevbl.BarRfFit(self),'fit_params');
             
             
@@ -110,9 +108,9 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
                 
                 if args.fitCenter
                     b = fp(iUnit).fit_params;
-                    peakInd(iUnit) = round(b(3));                    
+                    peakInd(iUnit) = round(b(3));
                 else
-                    y = getSpatialMap(self & keys(iUnit));                    
+                    y = getSpatialMap(self & keys(iUnit));
                     [~,peakInd(iUnit)] = max(y);
                     peaks = find(y==peakInd);
                     nPeaks = length(peaks);
@@ -272,7 +270,7 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             % ANOVA testing
             % Model: (yi-ym) = (yhat-ym) + (yi - yhat) => SST = SSM + SSE
             yhat = flevbl.BarRf.gauss(fp,x);
-            SSerror= sum((yi - yhat).^2); 
+            SSerror= sum((yi - yhat).^2);
             SSmodel = sum((yhat - mean(yi)).^2);
             dfm = length(fp)-1; % parameters
             dfe = n - dfm;

@@ -11,18 +11,17 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
         table = dj.Table('flevbl.TrialGroup')
-    end
-    properties
         popRel = (stimulation.StimTrialGroup - acq.StimulationIgnore) & ephys.Spikes &...
-            acq.Stimulation('exp_type like ''FlePhys%Experiment'' and correct_trials >= 300')...
-            - acq.SessionsIgnore;
+            acq.Stimulation('exp_type like "FlePhys%Experiment" and correct_trials >= 300')...
+            - acq.SessionsIgnore
     end
     
     methods
         function self = TrialGroup(varargin)
             self.restrict(varargin)
         end
-        
+    end
+    methods(Access = protected)
         function makeTuples(self, key)
             %!!! compute missing fields for key here
             self.insert(key)
@@ -35,14 +34,21 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
             makeTuples(flevbl.SubTrials,key)
             
         end
-        function [zeroTimePoint misAlignPixUsed] = getTrajRelTimeAtFlashLoc(self,flashLocation,dx,direction,barLum)
+    end
+    methods
+        function [zeroTimePoint misAlignPixUsed movCond] = getTrajRelTimeAtFlashLoc(self,flashLocation,...
+                dx,direction,barLum,motionType)
+            %             function [zeroTimePoint misAlignPixUsed] = getTrajRelTimeAtFlashLoc(self,flashLocation,...
+            %                     dx,direction,barLum,motionType)
+            % input 'motionType' should be 'cont','init' or 'stop'.
             
             if isnan(flashLocation)
                 zeroTimePoint = NaN;
                 return;
             end
             misAlignTol = 0;
-            
+            movCond = [];
+            misAlignPixUsed = 0;
             zeroTimePoint = nan;
             
             % Get the condition index for the moving bar
@@ -51,26 +57,53 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
             
             if ~any([c.dx]==dx)
                 return
-            end 
-            
-            movCond = find([c.bar_color_r]==barLum & [c.is_moving] & [c.dx]==dx & ...
-                [c.direction]==direction,1);
-            flashCond = find([c.bar_color_r]==barLum & [c.flash_location]== flashLocation,1);
+            end
+            T = fetch1(vstim.RefreshPeriod(self),'refresh_period_msec');
             sc = fetch(flevbl.StimConstants(key), 'stim_center_x');
+            flashCond = find([c.bar_color_r]==barLum & [c.flash_location]== flashLocation,1);
             
-            % Get one subTrial with this condition
-            md = fetch(flevbl.SubTrials(key,sprintf('cond_idx = %u',movCond)),'bar_locations',1);
+            switch motionType
+                case 'cont'
+                    allMovCond = find([c.bar_color_r]==barLum & ~[c.is_flash] & [c.is_moving]...
+                        & [c.dx]==dx & [c.direction]==direction & ~[c.is_init] & ~[c.is_stop]);
+                case 'init'
+                    % All the init conditions - there will be many of them
+                    allMovCond = find([c.bar_color_r]==barLum & ~[c.is_flash] & [c.is_moving]...
+                        & [c.dx]==dx & [c.direction]==direction & [c.is_init] & ~[c.is_stop]);
+                case 'stop'
+                    allMovCond = find([c.bar_color_r]==barLum & ~[c.is_flash] & [c.is_moving]...
+                        & [c.dx]==dx & [c.direction]==direction & ~[c.is_init] & [c.is_stop]);
+                otherwise
+                    error('unknown motion type')
+            end
+            
             fd = fetch(flevbl.SubTrials(key,sprintf('cond_idx = %u',flashCond)),'flash_centers',1);
+            % Choose the condition where motion started from or ended at the rf center
+            % location
+            nMovCond = length(allMovCond);
+            for iMovCond = 1:nMovCond
+                movCond = allMovCond(iMovCond);
+                % Get one subTrial with this condition
+                md = fetch(flevbl.SubTrials(key,sprintf('cond_idx = %u',movCond)),'bar_locations',1);
+                movBarLoc = md.bar_locations{:};
+                flashLoc = fd.flash_centers{:}(1) - sc.stim_center_x;
+                switch motionType
+                    case 'cont'
+                        alignFrameInd = find(movBarLoc==flashLoc);
+                    case 'init'
+                        alignFrameInd = find(movBarLoc(1)==flashLoc);
+                    case 'stop'
+                        alignFrameInd = find(movBarLoc(end)==flashLoc);
+                    otherwise
+                        error('Unknown motion type !')
+                end
+                if ~isempty(alignFrameInd)
+                    break
+                end
+            end
             
-            T = fetch1(stim.RefreshPeriod(self),'refresh_period_msec'); 
-            movBarLoc = md.bar_locations{:};
-            flashLoc = fd.flash_centers{:}(1) - sc.stim_center_x;
-            
-            alignFrameInd = find(movBarLoc==flashLoc);
-            misAlignPixUsed = 0;
             if isempty(alignFrameInd)
-                if misAlignTol > 0
-                    
+                if strcmp(motionType,'cont') && misAlignTol > 0                    
                     % randomly choose a moving location closest to the flashed location
                     r = rand(1);
                     if r < 0.5
@@ -86,6 +119,7 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
                     if isempty(alignFrameInd)
                         es = sprintf('The misAlignTol used did not find a close match between flash and moving bar\n');
                         disp(es);
+                        return
                     end
                 else
                     return

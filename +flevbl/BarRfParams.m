@@ -3,7 +3,7 @@
 
 %{
 flevbl.BarRfParams (lookup) # my newest table
-base_time = 150: double # msec before stimulus onset for baseline firing computation
+base_time = 100: double # msec before stimulus onset for baseline firing computation
 min_lag = 0: double # msec after stimulus onset for receptive field computation - starting
 max_lag = 150: double # msec after stimulus onset for receptive field computation - ending
 
