@@ -42,7 +42,6 @@ classdef RelFlashCenX < dj.Relvar & dj.AutoPopulate
                 tuples(iFlash).flash_location = flash_locs(iFlash);
                 tuples(iFlash).rel_to_mon_cen = flash_centers{iFlash}(1)-mon_cen_x;
                 tuples(iFlash).rel_to_stim_cen = flash_centers{iFlash}(1)-stim_cen_x;
-                
             end
             
             self.insert(tuples)

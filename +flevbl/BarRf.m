@@ -91,6 +91,7 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             args.fitCenter = true;
             args.resp_win_start = 30;
             args.resp_win_end = 100;
+            args.interpCenter = false;
             args.minFr = 5;
             args = parseVarArgs(args,varargin{:});
             
@@ -101,14 +102,18 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             peakInd = nan(1,nUnits);
             SNR = nan(1,nUnits);
             
-            fp = fetch(flevbl.BarRfFit(self),'fit_params');
+            fp = fetch(flevbl.BarRfFit*self ,'*');
             
             
             for iUnit = 1:nUnits
                 
                 if args.fitCenter
                     b = fp(iUnit).fit_params;
-                    peakInd(iUnit) = round(b(3));
+                    if args.interpCenter
+                        peakInd(iUnit) = b(3);
+                    else
+                        peakInd(iUnit) = round(b(3));
+                    end
                 else
                     y = getSpatialMap(self & keys(iUnit));
                     [~,peakInd(iUnit)] = max(y);
@@ -120,7 +125,13 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
                         fprintf('%u peaks found; choosing peak number %u',nPeaks,rp(1));
                     end
                 end
+                % If the peakInd is outside the flash locations, set it to NaN
+                nfl = size(fp(iUnit).flash_centers,2);
+                if peakInd(iUnit) < 1 || peakInd(iUnit) > nfl
+                    peakInd(iUnit) = NaN;
+                end
             end
+ 
         end
         
         

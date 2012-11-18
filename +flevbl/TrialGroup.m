@@ -26,7 +26,7 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
             %!!! compute missing fields for key here
             self.insert(key)
             % Populate subtables
-            makeTuples(flevbl.Phys,key)
+%             makeTuples(flevbl.Phys,key)
             makeTuples(flevbl.StimCond,key)
             makeTuples(flevbl.StimConstants,key)
             makeTuples(flevbl.DxVals,key)
