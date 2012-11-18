@@ -261,8 +261,9 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             % MS 2012-06-24
             assert(count(self)==1,'Supported only for single tuple relations !')
             p = fetch(self,'min_lag','max_lag','bin_width','base','map');
+
             lags = p.min_lag:p.bin_width:p.max_lag;
-            lags = lags(1:end-1);
+            lags = lags(1:size(p.map,1));
             
             % First find the peak in time and decide the response time window around it.
             spaceAvg = mean(p.map,2);
