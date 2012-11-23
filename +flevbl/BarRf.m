@@ -92,7 +92,8 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             args.resp_win_start = 30;
             args.resp_win_end = 100;
             args.interpCenter = false;
-            args.minFr = 5;
+            args.minFr = 20;
+           
             args = parseVarArgs(args,varargin{:});
             
             % Find flash index where the firing rate was maximum
@@ -106,7 +107,8 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             
             
             for iUnit = 1:nUnits
-                
+                y = getSpatialMap(self & keys(iUnit));
+               
                 if args.fitCenter
                     b = fp(iUnit).fit_params;
                     if args.interpCenter
@@ -129,6 +131,16 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
                 nfl = size(fp(iUnit).flash_centers,2);
                 if peakInd(iUnit) < 1 || peakInd(iUnit) > nfl
                     peakInd(iUnit) = NaN;
+                end
+                
+                % Apply minimum firing rate filter
+                if ~isnan(peakInd)
+                    s = max(round(peakInd)-2,1);
+                    e = min(round(peakInd)+2,size(y,2));
+                    pk = y(:,s:e);
+                    if mean(pk(:)) < args.minFr
+                        peakInd(iUnit) = NaN;
+                    end
                 end
             end
  

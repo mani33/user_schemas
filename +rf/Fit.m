@@ -1,12 +1,12 @@
 %{
 rf.Fit (computed) # my newest table
--> rf.Map
------
-cen_x : double # rf center x by fit
-cen_y : double # rf center y by fit
-fit_params: tinyblob # gaussian fit params
-residuals: mediumblob # fit residuals
 
+-> rf.Map
+---
+cen_x=null                  : double                        # rf center x by fit
+cen_y=null                  : double                        # rf center y by fit
+fit_params=null             : tinyblob                      # gaussian fit params
+residuals=null              : mediumblob                    # fit residuals
 %}
 
 classdef Fit < dj.Relvar & dj.AutoPopulate
@@ -64,6 +64,7 @@ classdef Fit < dj.Relvar & dj.AutoPopulate
             lb = [-5 -5 0 0 0 0]; % lower bounds in the order [meanX meanY varX varY covXY  gain]
             ub = [10 10 10 10 5 1000];
             opt = optimset('Display','off','MaxFunEvals',1e8,'MaxIter',1e8,'TolFun',1e-9);
+            
             [fitPar , ~, residuals] = lsqcurvefit(@rf.Fit.gauss,initGuess,xy,z',lb,ub,opt);
             
             % For now, we will try fitting inverse gaussian only for Diff map

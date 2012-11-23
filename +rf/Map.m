@@ -179,7 +179,6 @@ classdef Map < dj.Relvar
                 mapType = fetch1(rf.MapTypes(key),'map_type');
                 key.map = map.(mapType);
                 self.insert(key)
-                
             end
         end
         
@@ -190,7 +189,7 @@ classdef Map < dj.Relvar
             %   [xGrid yGrid] = getGrid(self,'deg')
             
             d = fetch(rf.StimConstants(fetch(self)),'*');
-%             pixPerDeg = tan(pi / 180) * d.monitor_distance / d.monitor_size_x * d.resolution_x;
+            %             pixPerDeg = tan(pi / 180) * d.monitor_distance / d.monitor_size_x * d.resolution_x;
             pixPerDeg = fetch1(vstim.PixPerDeg(fetch(self)),'pix_per_deg');
             xGrid = d.stim_center_x +((1:d.dot_num_x) - ceil(d.dot_num_x/2)) * d.dot_size;
             yGrid = d.stim_center_y +((1:d.dot_num_y) - ceil(d.dot_num_y/2)) * d.dot_size;
