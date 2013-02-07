@@ -125,29 +125,37 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
                 mahalDist = 1;
             end
             
-            fit_params = fetch1(self,'fit_params');
-            covMat = [fit_params(3) fit_params(5); fit_params(5) fit_params(4)];
-            mx = fit_params(1);
-            my = fit_params(2);
-            
-            % Create unit circle points for rescaling later using the eigen values
-            npts = 50;
-            tt = linspace(0,2*pi,npts)';
-            x = cos(tt);
-            y = sin(tt);
-            xy = [x(:) y(:)]';
-            
-            % Get the major and minor axis for the ellipse of gaussian receptive field
-            [eigVec,eigVal]=eig(covMat);
-            eigVal(eigVal<0) = 0;
-            halfAxisLen = sqrt(eigVal); % Equal to one std along each principal axis
-            d = mahalDist * halfAxisLen;
-            
-            % Project unit circle points in Euclidean space to the eigen space
-            % and scale it by std values along the principal axis.
-            outline = (eigVec * d * xy) + repmat([mx;my], 1, npts);
-            ox = outline(1,:);
-            oy = outline(2,:);
+            ddd = fetch(self,'fit_params');
+            nKeys = length(ddd);
+            ox = cell(1,nKeys);
+            oy = ox;
+            for iKey = 1:nKeys
+                fit_params = ddd(iKey).fit_params;
+                covMat = [fit_params(3) fit_params(5); fit_params(5) fit_params(4)];
+                mx = fit_params(1);
+                my = fit_params(2);
+                
+                % Create unit circle points for rescaling later using the eigen values
+                npts = 50;
+                tt = linspace(0,2*pi,npts)';
+                x = cos(tt);
+                y = sin(tt);
+                xy = [x(:) y(:)]';
+                
+                % Get the major and minor axis for the ellipse of gaussian receptive field
+                [eigVec,eigVal]=eig(covMat);
+                eigVal(eigVal<0) = 0;
+                halfAxisLen = sqrt(eigVal); % Equal to one std along each principal axis
+                d = mahalDist * halfAxisLen;
+                
+                % Project unit circle points in Euclidean space to the eigen space
+                % and scale it by std values along the principal axis.
+                outline = (eigVec * d * xy) + repmat([mx;my], 1, npts);
+                ox{iKey} = outline(1,:)';
+                oy{iKey} = outline(2,:)';
+            end
+            ox = [ox{:}];
+            oy = [oy{:}];
         end
         
         function varargout = plot(self,varargin)
@@ -156,53 +164,81 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             arg.axis = [];
             arg.mahalDist = 1;
             arg.outlineOnly = false;
+            arg.pause = false;
+            arg.showTitle = false;
+            args.showRfCen = true;
+            arg.titStr = [];
             arg = parseVarArgs(arg,varargin{:});
             
             % get all map data
-            key = fetch(self);
-            md = fetch(rf.MapAvg(key),'*');
-            
-            % get grid
-            [x y] = getGrid(rf.Map(key),'deg');
-            
-            if ~isempty(arg.axis)
-                axes(arg.axis)
-            end
-            
-            % smooth map
-            w = gausswin(arg.smooth);
-            w = w*w';
-            w = w/sum(w(:));
-            map = imfilter(md.map,w,'same');
-            
-            % plot map
-            if ~arg.outlineOnly
-                h = imagesc(x,y,map);
+            keys = fetch(self);
+            nKeys = length(keys);
+            for i = 1:nKeys
+                key = keys(i);
+                arg.titStr = sprintf('%u',i);
+                % Get title string
+                if arg.showTitle
+                    [elecNum, unitId] = fetchn(ephys.Spikes(key),'electrode_num','unit_id');
+                    sessPath = fetch1(acq.Sessions(key),'session_path');
+                    [~,spStr] = fileparts(sessPath);
+                    if isempty(arg.titStr)
+                        arg.titStr = [spStr sprintf('  elec: %u unit_id: %u',elecNum,unitId)];
+                    end
+                end
+                md = fetch(rf.MapAvg(key),'*');
+                
+                % get grid
+                [x y] = getGrid(rf.Map(key),'deg');
+                
+                if ~isempty(arg.axis)
+                    axes(arg.axis)
+                end
+                
+                % smooth map
+                w = gausswin(arg.smooth);
+                w = w*w';
+                w = w/sum(w(:));
+                map = imfilter(md.map,w,'same');
+                
+                % plot map
+                if ~arg.outlineOnly
+                    h = imagesc(x,y,map);
+                    hold on
+                end
+                
+                if size(map,1)==size(map,2)
+                    PlotTools.sqAx;
+                end
+                axis image
+                set(gca,'YDir','reverse','FontSize',7)
+                
+                if nargout
+                    varargout{1} = h;
+                end
+                
+                if ~arg.outlineOnly
+                    % plot meridians
+                    plot(xlim,[0 0],'w');
+                    plot([0 0],ylim,'w');
+                    hold on
+                end
+                % Plot outline of receptive field now.
+                [ox, oy] = getOutline(self & key,arg.mahalDist);
+                if ~arg.outlineOnly
+                    plot(ox,oy,'w');
+                else
+                    plot(ox,oy,'k')
+                end
+                title(arg.titStr)
                 hold on
-            end
-            
-            if size(map,1)==size(map,2)
-                PlotTools.sqAx;
-            end
-            axis image
-            set(gca,'YDir','reverse','FontSize',7)
-            
-            if nargout
-                varargout{1} = h;
-            end
-            
-            if ~arg.outlineOnly
-                % plot meridians
-                plot(xlim,[0 0],'w');
-                plot([0 0],ylim,'w');
-                hold on
-            end
-            % Plot outline of receptive field now.
-            [ox oy] = getOutline(self,arg.mahalDist);
-            if ~arg.outlineOnly
-                plot(ox,oy,'w');
-            else
-                plot(ox,oy,'k')
+                if arg.pause
+                    pause
+                end
+                if args.showRfCen
+                    [cx, cy] = fetchn(self & key,'cen_x','cen_y');
+                    plot(cx,cy,'r.','MarkerSize',8)
+                    text(cx+0.01,cy,sprintf('%u',i))
+                end
             end
         end
     end

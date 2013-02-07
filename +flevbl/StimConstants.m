@@ -63,7 +63,11 @@ classdef StimConstants < dj.Relvar
         function makeTuples(self, key)
             %!!! compute missing fields for key here
             c = fetch1(stimulation.StimTrialGroup(key),'stim_constants');
-            key.monitor_type = c.monitorType;
+            if isfield(c,'monitorType')
+                key.monitor_type = c.monitorType;
+            else
+                key.monitor_type = 'CRT';
+            end
             key.bg_color_r = c.bgColor(1);
             key.bg_color_g = c.bgColor(2);
             key.bg_color_b = c.bgColor(3);

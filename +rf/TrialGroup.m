@@ -26,28 +26,37 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
             %!!! compute missing fields for key here
             self.insert(key)
             % Populate subtables
-%             makeTuples(rf.Phys,key)
+            %             makeTuples(rf.Phys,key)
             makeTuples(rf.StimConstants,key)
             makeTuples(rf.Trials,key)
         end
     end
     methods
-        function varargout = plotMapForTetArray(self,xLim,yLim)
+        function varargout = plotMapForTetArray(self,xylim_deg,col)
+            % Supported only for multiunits currently
             
             if nargin < 2
-                xLim = [];
-                yLim = [];
+                xylim_deg = [];
+                col = [0 0 0.8];
             elseif nargin < 3
-                yLim = [];
+                col = [0 0 0.8];
+            end
+            
+            if ~isempty(xylim_deg)
+                ori = xylim_deg([1 3]);
+                width = diff(xylim_deg(1:2));
+                height = diff(xylim_deg(3:4));
+                pos = [ori width height];
             end
             key = fetch(self * acq.Subjects * acq.Sessions,'*');
+            assert(length(key)==1,'Supported for one tuple only')
             
             tetArrayLayout = getTetrodeArrayLayout(key.subject_name,1);
             [nRows nCols] = size(tetArrayLayout);
             c = 0;
             figure;
             font_size = 6;
-            set(gcf,'Position',[221,49,772,668])
+            set(gcf,'Position',[360,47,613,651])
             dot_size = fetch1(rf.StimConstants(key),'dot_size');
             dnx = fetch1(rf.StimConstants(key),'dot_num_x');
             dny = fetch1(rf.StimConstants(key),'dot_num_y');
@@ -58,43 +67,49 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
                     tet = tetArrayLayout{iRow,iCol};
                     if ischar(tet) && ismember(tet,{'R1','R2','R3','R4'}) % ref
                         subplot(nRows,nCols,c);
-                        imagesc(cat(3,0*ones(dny,dnx),0*ones(dny,dnx),0.8*ones(dny,dnx)));
+                        
                         title(tet,'FontSize', font_size,'Color',[1 0 0]);
-                        axis image;
-                        set(gca,'FontSize', font_size,'XTickLabel',[],'YTickLabel',[])
-                        if ~isempty(xLim)
-                            xlim(xLim);
-                        end
-                        if ~isempty(yLim)
-                            ylim(yLim);
+                        if ~isempty(xylim_deg)
+                            rectangle('Position',pos,'FaceColor',col)
+                            axis equal
+                            xlim(xylim_deg(1:2))
+                            ylim(xylim_deg(3:4))
+                            set(gca,'FontSize', font_size)
+                        else
+                            imagesc(cat(3,0*ones(dny,dnx),0*ones(dny,dnx),0.8*ones(dny,dnx)));
+                            set(gca,'FontSize', font_size,'XTickLabel',[],'YTickLabel',[])
                         end
                     elseif ~isnan(tet) % tetrodes
                         titStr = sprintf('TT %0.0d',tet);
-                        rv = rf.MapAvg(sprintf('map_type_num=3 and subject_id=%u',key.subject_id)) & ...
+                        rv = rf.MapAvg(sprintf('sort_method_num = 4 and map_type_num=3 and subject_id=%u',key.subject_id)) & ...
                             key & ephys.Spikes(sprintf('electrode_num = %u',tet));
                         subplot(nRows,nCols,c);
                         if count(rv) > 0  % live electrodes
-                            plot(rv);
+                            plot(rv,'xylim_deg',xylim_deg,'bkgdCol',col);
                             set(gca,'FontSize', font_size);
                             title(titStr,'FontSize', font_size);
                             
                         else % dead/non-existent electrodes
-                            imagesc(cat(3,0*ones(dny,dnx),0*ones(dny,dnx),0.8*ones(dny,dnx)));
                             title(titStr,'FontSize', font_size);
-                            axis image;
-                            set(gca,'FontSize', font_size,'XTickLabel',[],'YTickLabel',[])
-                        end
-                        if ~isempty(xLim)
-                            xlim(xLim);
-                        end
-                        if ~isempty(yLim)
-                            ylim(yLim);
+                            if ~isempty(xylim_deg)
+                                rectangle('Position',pos,'FaceColor',col)
+                                axis equal
+                                xlim(xylim_deg(1:2))
+                                ylim(xylim_deg(3:4))
+                                set(gca,'FontSize', font_size)
+                            else
+                                imagesc(cat(3,0*ones(dny,dnx),0*ones(dny,dnx),0.8*ones(dny,dnx)));
+                                axis image;
+                                set(gca,'FontSize', font_size,'XTickLabel',[],'YTickLabel',[])                                
+                            end
                         end
                     end
                 end
             end
-            dotSizeDeg = dot_size/fetch1(stim.PixPerDeg(self),'pix_per_deg');
-            ms_suptitle([key.subject_name '  ' key.session_datetime sprintf('   dotSize: %0.2f deg',dotSizeDeg)]);
+            [~, sds] = fileparts(fetch1(acq.Stimulation(key),'stim_path'));
+
+            dotSizeDeg = dot_size/fetch1(vstim.PixPerDeg(self),'pix_per_deg');
+            ms_suptitle([key.subject_name '  ' sds sprintf('   dotSize: %0.2f deg',dotSizeDeg)]);
             if nargout
                 varargout{1} = key.session_datetime(1:10);
             end

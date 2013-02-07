@@ -32,6 +32,8 @@ classdef MapAvg < dj.Relvar
             
             arg.smooth = 5;
             arg.axis = [];
+            arg.xylim_deg = []; % [xlim(1) xlim(2) ylim(1) ylim(2)]
+            arg.bkgdCol = [0 0.25 1];
             arg.units = 'deg'; % deg or pix
             arg = parseVarArgs(arg,varargin{:});
             
@@ -44,7 +46,16 @@ classdef MapAvg < dj.Relvar
             if ~isempty(arg.axis)
                 axes(arg.axis)
             end
+                
+            if ~isempty(arg.xylim_deg)
+               ori = arg.xylim_deg([1 3]);
+               width = diff(arg.xylim_deg(1:2));
+               height = diff(arg.xylim_deg(3:4));
+               pos = [ori width height];
+               rectangle('Position',pos,'FaceColor',arg.bkgdCol)
+            end
             
+            hold on
             % smooth map
             w = gausswin(arg.smooth);
             w = w*w';
@@ -61,12 +72,22 @@ classdef MapAvg < dj.Relvar
             if size(map,1)==size(map,2)
                 PlotTools.sqAx;
             end
-            axis image
+            
+            if isempty(arg.xylim_deg)
+                axis image
+            else
+                axis equal
+                xlim(arg.xylim_deg(1:2))
+                ylim(arg.xylim_deg(3:4))
+            end
+            
             set(gca,'YDir','reverse','FontSize',7)
             
             if nargout
                 varargout{1} = h;
             end
+            
+            
             % plot meridians
             plot(xlim,[0 0],'w');
             plot([0 0],ylim,'w');

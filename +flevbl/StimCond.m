@@ -54,8 +54,8 @@ classdef StimCond < dj.Relvar
                 tuple.bar_color_g = cc(iCond).condition_info.barColor(2);
                 tuple.bar_color_b = cc(iCond).condition_info.barColor(3);
                 tuple.trajectory_angle = cc(iCond).condition_info.trajectoryAngle;
-                tuple.traj_offset = cc(iCond).condition_info.trajOffset;
                 
+                tuple = util.addFieldIfExists(tuple,cc(iCond).condition_info,'trajOffset','traj_offset');
                 tuple = util.addFieldIfNotNan(tuple,'direction',cc(iCond).condition_info.direction);
                 tuple = util.addFieldIfNotNan(tuple,'dx',cc(iCond).condition_info.dx);
                 tuple = util.addFieldIfExists(tuple,cc(iCond).condition_info,'arrangement');

@@ -9,8 +9,6 @@ classdef SnrFitAvg < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
         table = dj.Table('rf.SnrFitAvg')
-    end
-    properties
         popRel = rf.FitAvg  % !!! update the populate relation
     end
     
@@ -18,7 +16,8 @@ classdef SnrFitAvg < dj.Relvar & dj.AutoPopulate
         function self = SnrFitAvg(varargin)
             self.restrict(varargin)
         end
-        
+    end
+    methods(Access=protected)
         function makeTuples(self, key)
             nMahDistForSNR = 1;
             fd = fetch1(rf.FitAvg(key),'fit_params');
@@ -51,3 +50,4 @@ classdef SnrFitAvg < dj.Relvar & dj.AutoPopulate
         end
     end
 end
+

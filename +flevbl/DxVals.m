@@ -25,6 +25,7 @@ classdef DxVals < dj.Relvar
             dx = c.dx;
             for i = 1:length(dx)
                 key.dx = dx(i);
+                save('dkey','key')
                 self.insert(key);
             end
         end
