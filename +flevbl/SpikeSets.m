@@ -125,7 +125,7 @@ classdef SpikeSets < dj.Relvar & dj.AutoPopulate
             mfr_dir1 = meanFr(2);
         end
         
-        function plotRasters(self,varargin)
+        function plot(self,varargin)
             
             % rfCond = 0(stim outside rf) or = 1 or = -1(stim inside or outside rf)
             % combinedStim = 1(moving and flashed bars present in subtrial); = 0(single stim only)
@@ -133,32 +133,35 @@ classdef SpikeSets < dj.Relvar & dj.AutoPopulate
             arg.barTypes = {'flash','moving'}; % {'flash','moving'} or 'flash' or 'moving'
             arg.rfCond = true; % stim in the receptive field or not
             arg.combinedStim = false; % plot combined stim?
-            arg.plotsPerPage = 20;
+            arg.plotsPerPage = 24;
             arg.pause = true;
+            arg.plot_type = 'raster'; % can be 'raster','sdf','hist'
+            arg.axis_col = [1 1 1];
             arg = parseVarArgs(arg,varargin{:});
             argList = struct2argList(arg);
             
             key = fetch(self);
             
-            [condIdx condStr] = getSelCond(flevbl.TrialGroup(key),argList{:});
+            [condIdx, condStr] = getSelCond(flevbl.TrialGroup(key),argList{:});
             nCond = length(condIdx);
             cc = 0;
+            
             
             for iCond = 1:nCond
                 cc = cc + 1;
                 currCondIdx = condIdx(iCond);
                 if cc==1 || cc > arg.plotsPerPage
-                    figure;
-                    set(gcf,'Position',[102,101,1124,575])
+                    ms_figure
+                    set(gcf,'Position',[80,476,1124,575],'Color',arg.axis_col)
                 end
                 if cc > arg.plotsPerPage
                     cc = 1;
                 end
                 
-                ax = subplot(4,5,cc);
+                ax = subplot(4,6,cc);
                 cs = sprintf('cond_idx=%u',currCondIdx);
                 stsRv = flevbl.SubTrialSpikes(key) & flevbl.SubTrials(cs);
-                plotSpikes(stsRv,'axes',ax,'titStr',condStr{iCond});
+                plot(stsRv,'axes',ax,'titStr',condStr{iCond},argList{:});
                 
                 %                 if cond(currCondIdx).is_moving
                 %                     rfLocInd = getCenter(flevbl.FlashRf(key));

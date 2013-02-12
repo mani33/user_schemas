@@ -212,6 +212,7 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
         function [condIdx condStr] = getSelCond(self,varargin)
             arg.direction = [0 1];
             arg.dx = [];
+            arg.bar_gray_level = 255;
             arg.arg.barTypes = {'flash','moving'};
             arg.rfCond = true;
             
@@ -240,7 +241,7 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
             if  arg.combinedStim == 0 % single stimulus in subtrial condition
                 
                 % Flashes
-                allFlashOnlyCond = [cond.is_flash] & ~[cond.is_moving];
+                allFlashOnlyCond = [cond.is_flash] & ~[cond.is_moving] & ismember([cond.bar_color_r],arg.bar_gray_level);
                 rfInArr = getStimCenProxArrForCond(self,find(allFlashOnlyCond,1),'flash');
                 rfInCond = find(allFlashOnlyCond & [cond.arrangement]==rfInArr);
                 rfOutCond = find(allFlashOnlyCond & [cond.arrangement]~=rfInArr);
@@ -250,7 +251,8 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
                 
                 % Moving bars
                 allMovOnlyCond = ~[cond.is_flash] & [cond.is_moving] & ...
-                    ismember([cond.dx],arg.dx) & ismember([cond.direction],arg.direction);
+                    ismember([cond.dx],arg.dx) & ismember([cond.direction],arg.direction) & ...
+                     ismember([cond.bar_color_r],arg.bar_gray_level);
                 rfInArr = getStimCenProxArrForCond(self,find(allMovOnlyCond,1),'moving');
                 rfInCond = find(allMovOnlyCond & [cond.arrangement]==rfInArr);
                 rfOutCond = find(allMovOnlyCond & [cond.arrangement]~=rfInArr);
@@ -263,7 +265,8 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
             elseif arg.combinedStim == 1
                 % Flashes
                 allFlashCond = [cond.is_flash] & [cond.is_moving] & ...
-                    ismember([cond.dx],arg.dx) & ismember([cond.direction],arg.direction);
+                    ismember([cond.dx],arg.dx) & ismember([cond.direction],arg.direction) ...
+                    & ismember([cond.bar_color_r],arg.bar_gray_level);
                 rfInArr = getStimCenProxArrForCond(self,find(allFlashCond,1),'flash');
                 rfInCond = find(allFlashCond & [cond.arrangement]==rfInArr);
                 rfOutCond = find(allFlashCond & [cond.arrangement]~=rfInArr);
@@ -274,7 +277,8 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
                 % Moving bars
                 
                 allMovCond = [cond.is_flash] & [cond.is_moving] & ...
-                    ismember([cond.dx],arg.dx) & ismember([cond.direction],arg.direction);
+                    ismember([cond.dx],arg.dx) & ismember([cond.direction],arg.direction)...
+                    & ismember([cond.bar_color_r],arg.bar_gray_level);
                 rfInArr = getStimCenProxArrForCond(self,find(allMovCond,1),'moving');
                 rfInCond = find(allMovCond & [cond.arrangement]==rfInArr);
                 rfOutCond = find(allMovCond & [cond.arrangement]~=rfInArr);

@@ -47,6 +47,7 @@ start_time                  : double                        # no comments
 end_time                    : double                        # no comments
 folder                      : varchar(250)                  # no comments
 date                        : date                          # datevalue
+num_flash_locs_barmap       : smallint unsigned             # number of bars for rf mapping
 %}
 
 classdef StimConstants < dj.Relvar
@@ -88,6 +89,11 @@ classdef StimConstants < dj.Relvar
             key.trajectory_length = c.trajectoryLength;
             key.trajectory_angle = c.trajectoryAngle;
             key.num_flash_locs = c.numFlashLocs;
+            if isfield(c,'numFlashLocsBarMap')
+                key.num_flash_locs_barmap = c.numFlashLocsBarMap;
+            else
+                key.num_flash_locs_barmap = c.numFlashLocs;
+            end
             key = util.addFieldIfExists(key,c,'flashLocDistance','flash_loc_distance');
             key = util.addFieldIfExists(key,c,'verticalDistance','vertical_distance');
             key.direction = c.direction;
