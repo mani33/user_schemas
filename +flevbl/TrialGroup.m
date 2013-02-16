@@ -213,21 +213,24 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
             arg.direction = [0 1];
             arg.dx = [];
             arg.bar_gray_level = 255;
-            arg.arg.barTypes = {'flash','moving'};
+            arg.is_init = false;
+            arg.is_stop = false;
+            arg.barTypes = {'flash','moving'};
             arg.rfCond = true;
             
             arg = parseVarArgs(arg,varargin{:});
             
             key = fetch(self);
-            cond = fetch(flevbl.StimCond(key),'*');
+            qs = sprintf('is_init = %u and is_stop = %u and bar_color_r = %u',arg.is_init,arg.is_stop,arg.bar_gray_level);
+            cond = fetch(flevbl.StimCond(key,qs),'*');
             
             if isempty(arg.dx)
                 dx = unique([cond.dx]);
                 arg.dx = dx(~isnan(dx));
             end
             
-            if ischar(arg.arg.barTypes)
-                arg.arg.barTypes = {arg.arg.barTypes};
+            if ischar(arg.barTypes)
+                arg.barTypes = {arg.barTypes};
             end
             stimTypes = {'flash','moving'};
             
@@ -237,25 +240,23 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
                 fprintf('The requested session is not a combined session; using single stim conditions instead!\n');
             end
             
-            
             if  arg.combinedStim == 0 % single stimulus in subtrial condition
                 
                 % Flashes
-                allFlashOnlyCond = [cond.is_flash] & ~[cond.is_moving] & ismember([cond.bar_color_r],arg.bar_gray_level);
-                rfInArr = getStimCenProxArrForCond(self,find(allFlashOnlyCond,1),'flash');
-                rfInCond = find(allFlashOnlyCond & [cond.arrangement]==rfInArr);
-                rfOutCond = find(allFlashOnlyCond & [cond.arrangement]~=rfInArr);
+                allFlashOnlyCond = [cond.is_flash] & ~[cond.is_moving];
+                rfInArr = fetch1(flevbl.StimCenProxCond(self,sprintf('cond_idx = %u',find(allFlashOnlyCond,1))),'arr_rf_in');
+                rfInCond = [cond(allFlashOnlyCond & [cond.arrangement]==rfInArr).cond_idx];
+                rfOutCond = [cond(allFlashOnlyCond & [cond.arrangement]~=rfInArr).cond_idx];
                 flashCond = [rfInCond rfOutCond];
                 flashCondStr = [ repmat({'flash-inRf-single'},1,length(rfInCond)),...
                     repmat({'flash-outRf-single'},1,length(rfOutCond))];
                 
                 % Moving bars
                 allMovOnlyCond = ~[cond.is_flash] & [cond.is_moving] & ...
-                    ismember([cond.dx],arg.dx) & ismember([cond.direction],arg.direction) & ...
-                     ismember([cond.bar_color_r],arg.bar_gray_level);
-                rfInArr = getStimCenProxArrForCond(self,find(allMovOnlyCond,1),'moving');
-                rfInCond = find(allMovOnlyCond & [cond.arrangement]==rfInArr);
-                rfOutCond = find(allMovOnlyCond & [cond.arrangement]~=rfInArr);
+                    ismember([cond.dx],arg.dx) & ismember([cond.direction],arg.direction);
+                rfInArr = fetch1(flevbl.StimCenProxCond(self,sprintf('cond_idx = %u',find(allMovOnlyCond,1))),'arr_rf_in');
+                rfInCond = [cond(allMovOnlyCond & [cond.arrangement]==rfInArr).cond_idx];
+                rfOutCond = [cond(allMovOnlyCond & [cond.arrangement]~=rfInArr).cond_idx];
                 movCond = [rfInCond rfOutCond];
                 movCondStr = [ repmat({'mov-inRf-single'},1,length(rfInCond)),...
                     repmat({'mov-outRf-single'},1,length(rfOutCond))];
@@ -265,11 +266,10 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
             elseif arg.combinedStim == 1
                 % Flashes
                 allFlashCond = [cond.is_flash] & [cond.is_moving] & ...
-                    ismember([cond.dx],arg.dx) & ismember([cond.direction],arg.direction) ...
-                    & ismember([cond.bar_color_r],arg.bar_gray_level);
-                rfInArr = getStimCenProxArrForCond(self,find(allFlashCond,1),'flash');
-                rfInCond = find(allFlashCond & [cond.arrangement]==rfInArr);
-                rfOutCond = find(allFlashCond & [cond.arrangement]~=rfInArr);
+                    ismember([cond.dx],arg.dx) & ismember([cond.direction],arg.direction);
+                rfInArr = fetch1(flevbl.StimCenProxCond(self,sprintf('cond_idx = %u',find(allFlashCond,1))),'arr_rf_in');
+                rfInCond = [cond(allFlashCond & [cond.arrangement]==rfInArr).cond_idx];
+                rfOutCond = [cond(allFlashCond & [cond.arrangement]~=rfInArr).cond_idx];
                 flashCond = [rfInCond rfOutCond];
                 flashCondStr = [ repmat({'flash-inRf-comb'},1,length(rfInCond)),...
                     repmat({'flash-outRf-comb'},1,length(rfOutCond))];
@@ -277,11 +277,10 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
                 % Moving bars
                 
                 allMovCond = [cond.is_flash] & [cond.is_moving] & ...
-                    ismember([cond.dx],arg.dx) & ismember([cond.direction],arg.direction)...
-                    & ismember([cond.bar_color_r],arg.bar_gray_level);
-                rfInArr = getStimCenProxArrForCond(self,find(allMovCond,1),'moving');
-                rfInCond = find(allMovCond & [cond.arrangement]==rfInArr);
-                rfOutCond = find(allMovCond & [cond.arrangement]~=rfInArr);
+                    ismember([cond.dx],arg.dx) & ismember([cond.direction],arg.direction);
+                rfInArr = fetch1(flevbl.StimCenProxCond(self,sprintf('cond_idx = %u',find(allMovCond,1))),'arr_rf_in');
+                rfInCond = [cond(allMovCond & [cond.arrangement]==rfInArr).cond_idx];
+                rfOutCond = [cond(mov_cond_idx(allMovCond & [cond.arrangement]~=rfInArr)).cond_idx];
                 movCond = [rfInCond rfOutCond];
                 movCondStr = [ repmat({'mov-inRf-comb'},1,length(rfInCond)),...
                     repmat({'mov-outRf-comb'},1,length(rfOutCond))];
