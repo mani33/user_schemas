@@ -53,14 +53,13 @@ classdef SubTrialSpikes < dj.Relvar
             
             args.axes = [];
             args.titStr = '';
-            args.Position = [836 260 841 660];
             args.rasterType = 'dot'; % 'line' or 'dot'
             args.rasterDotSize = 1;
             args.rasterLineWidth = 1;
             args.resp_start_time = -500;
             args.bin_width = 10;
             args.axis_col = [0.95 0.95 0.95];
-            args.plot_type = 'raster'; % can be 'raster','sdf','hist'
+            args.plot_type = 'raster'; % can be 'raster','sdf','hist' or 'raster-sdf'
             args = parseVarArgs(args,varargin{:});
             
             if isempty(args.axes)
@@ -85,13 +84,15 @@ classdef SubTrialSpikes < dj.Relvar
             sub = fetch(flevbl.SubTrials(keys(1)),'substim_on','substim_off');
             stimTime = sub.substim_off - sub.substim_on;
             
-            if any(strcmp(args.plot_type,{'sdf','hist'}))
+            if any(strcmp(args.plot_type,{'sdf','hist','raster-sdf'}))
                 tot_time = -args.resp_start_time + stimTime + postStimTime(1);
                 bin_edges = args.resp_start_time:args.bin_width:tot_time;
                 bin_cen = bin_edges(1:end-1) + args.bin_width/2;
                 hc = histc(spikes,bin_edges);
                 fr_hz = hc * 1000/(nTrials*args.bin_width);
                 fr_hz = fr_hz(1:end-1);
+                gw = getGausswin(20,args.bin_width);
+                fr_hz_sm = conv(fr_hz,gw,'same');
             end
             switch args.plot_type
                 case 'raster'
@@ -101,15 +102,18 @@ classdef SubTrialSpikes < dj.Relvar
                     PlotTools.title(args.titStr)
                     PlotTools.xlabel('Time (ms)')
                     PlotTools.ylabel('Trial #')
-                    
-                    % plot stim on and off
-                    hold on
-                    plot(0,0,'*','color',[0 0.5 0])
-                    plot(stimTime,0,'*r')
                 case 'sdf'                    
-                    plot(bin_cen,fr_hz,'k')
+                    plot(bin_cen,fr_hz_sm,'k')
                 case 'hist'
                     bar(bin_cen,fr_hz,1,'FaceColor','k')
+                case 'raster-sdf'
+                    ylim([0 nTrials+1]);
+                    plot(spikes,y,'k.','MarkerSize',1);
+                    hold on
+                    PlotTools.title(args.titStr)
+                    PlotTools.xlabel('Time (ms)')
+                    PlotTools.ylabel('Trial #')
+                    plot(bin_cen,fr_hz_sm * nTrials/max(fr_hz_sm),'r','linewidth',1.5)
                 otherwise
                     error('plot_type should be one of "raster","sdf","hist"')
             end
@@ -117,6 +121,10 @@ classdef SubTrialSpikes < dj.Relvar
             axis tight
             title(args.titStr,'fontsize',7);
             xlim([args.resp_start_time stimTime+postStimTime(1)]);
+            % plot stim on and off
+            hold on
+            plot(0,0,'*','color',[0 0.5 0])
+            plot(stimTime,0,'*r')
             set(gca,'FontSize',5,'FontName','Arial','Box','Off',...
                 'Color',args.axis_col,'XColor',[0.7 0.7 0.7],'YColor',[0.7 0.7 0.7])
             % return figure handle

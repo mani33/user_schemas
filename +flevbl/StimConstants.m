@@ -33,7 +33,7 @@ max_stimulus_time=null      : smallint unsigned             # blah
 inter_stimulus_time=null    : smallint unsigned             # ist
 post_stimulus_time=null     : smallint unsigned             # blah
 flash_stop                  : tinyint                       # no comments
-flash_init=null             : tinyint                       # no comments
+flash_init                  : tinyint                       # was it flash initiated condition
 combined=0                  : tinyint                       # flash and moving bar together
 arrangement=null            : tinyblob                      # blah
 reward_prob                 : double                        # no comments
@@ -102,7 +102,11 @@ classdef StimConstants < dj.Relvar
             key = util.addFieldIfExists(key,c,'postStimulusTime','post_stimulus_time');
             key.flash_stop = c.flashStop;
             if isfield(c,'flashInit')
-                key.flash_init = c.flashInit;
+                if isnan(c.flashInit)
+                    key.flash_init = 0;
+                else
+                    key.flash_init = c.flashInit;
+                end
             end
             key = util.addFieldIfExists(key,c,'combined');
             key = util.addFieldIfExists(key,c,'arrangement');

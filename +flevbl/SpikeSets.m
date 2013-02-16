@@ -135,8 +135,11 @@ classdef SpikeSets < dj.Relvar & dj.AutoPopulate
             arg.combinedStim = false; % plot combined stim?
             arg.plotsPerPage = 24;
             arg.pause = true;
-            arg.plot_type = 'raster'; % can be 'raster','sdf','hist'
+            arg.plot_type = 'raster'; % can be 'raster','sdf','hist' or 'raster-sdf'
             arg.axis_col = [1 1 1];
+            arg.is_init = false;
+            arg.is_stop = false;
+            arg.Position = [1,441,1280,684];
             arg = parseVarArgs(arg,varargin{:});
             argList = struct2argList(arg);
             
@@ -145,20 +148,19 @@ classdef SpikeSets < dj.Relvar & dj.AutoPopulate
             [condIdx, condStr] = getSelCond(flevbl.TrialGroup(key),argList{:});
             nCond = length(condIdx);
             cc = 0;
-            
-            
+            np = ceil(sqrt(arg.plotsPerPage));
             for iCond = 1:nCond
                 cc = cc + 1;
                 currCondIdx = condIdx(iCond);
                 if cc==1 || cc > arg.plotsPerPage
                     ms_figure
-                    set(gcf,'Position',[80,476,1124,575],'Color',arg.axis_col)
+                    set(gcf,'Position',arg.Position,'Color',arg.axis_col)
                 end
                 if cc > arg.plotsPerPage
                     cc = 1;
                 end
                 
-                ax = subplot(4,6,cc);
+                ax = subplot(np,np+1,cc);
                 cs = sprintf('cond_idx=%u',currCondIdx);
                 stsRv = flevbl.SubTrialSpikes(key) & flevbl.SubTrials(cs);
                 plot(stsRv,'axes',ax,'titStr',condStr{iCond},argList{:});
