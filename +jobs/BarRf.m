@@ -1,6 +1,6 @@
 %{
 jobs.BarRf(manual)   # job to populate spike
--> fle.BinnedSpikeSets
+-> flevbl.BinnedSpikeSets
 <<JobFields>>
 %}
 

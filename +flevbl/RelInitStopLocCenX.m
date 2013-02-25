@@ -27,7 +27,11 @@ classdef RelInitStopLocCenX < dj.Relvar & dj.AutoPopulate
         popRel = flevbl.TrialGroup & flevbl.StimConstants('flash_init=1 and flash_stop =1') ...
             & vstim.PixPerDeg  % !!! update the populate relation
     end
-    
+    methods
+        function self = RelInitStopLocCenX(varargin)
+            self.restrict(varargin)
+        end
+    end
     methods(Access=protected)
         
         function makeTuples(self, key)

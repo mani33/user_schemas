@@ -1,12 +1,12 @@
 %{
-fle.TrialGroupJobs(manual)   # jobs run at the end of each experiment
--> fle.TrialGroup
+flevbl.TrialGroupJobs(manual)   # jobs run at the end of each experiment
+-> flevbl.TrialGroup
 <<JobFields>>
 %}
 
 classdef TrialGroupJobs < dj.Relvar
     properties(Constant)
-        table = dj.Table('fle.TrialGroupJobs')
+        table = dj.Table('jobs.TrialGroupJobs')
     end
     methods
         function self = TrialGroupJobs(varargin)

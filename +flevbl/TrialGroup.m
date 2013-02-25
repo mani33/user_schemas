@@ -60,7 +60,7 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
             end
             T = fetch1(vstim.RefreshPeriod(self),'refresh_period_msec');
             sc = fetch(flevbl.StimConstants(key), 'stim_center_x');
-            flashCond = find([c.bar_color_r]==barLum & [c.flash_location]== flashLocation,1);
+            flashCond = find([c.bar_color_r]==barLum & [c.is_flash] & [c.flash_location]== flashLocation,1);
             
             switch motionType
                 case 'cont'

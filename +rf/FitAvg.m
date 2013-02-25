@@ -166,8 +166,13 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             arg.outlineOnly = false;
             arg.pause = false;
             arg.showTitle = false;
-            args.showRfCen = true;
+            arg.showRfCen = false;
             arg.titStr = [];
+            arg.axisLim = [];
+            arg.FontSize = 8;
+            arg.outlineColor = 'k';
+            arg.showCardinal = true;
+            arg.LineWidth = 0.5;
             arg = parseVarArgs(arg,varargin{:});
             
             % get all map data
@@ -188,8 +193,7 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
                 md = fetch(rf.MapAvg(key),'*');
                 
                 % get grid
-                [x y] = getGrid(rf.Map(key),'deg');
-                
+                [x, y] = getGrid(rf.Map(key),'deg');
                 if ~isempty(arg.axis)
                     axes(arg.axis)
                 end
@@ -209,12 +213,9 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
                 if size(map,1)==size(map,2)
                     PlotTools.sqAx;
                 end
-                axis image
-                set(gca,'YDir','reverse','FontSize',7)
                 
-                if nargout
-                    varargout{1} = h;
-                end
+                
+                
                 
                 if ~arg.outlineOnly
                     % plot meridians
@@ -227,21 +228,42 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
                 if ~arg.outlineOnly
                     plot(ox,oy,'w');
                 else
-                    plot(ox,oy,'k')
+                    plot(ox,oy,'Color',arg.outlineColor,'linewidth',arg.LineWidth);
+                    %                     set(gca,'YTickLabel',-get(gca,'YTick'));
                 end
-                title(arg.titStr)
+                axis image
+                if ~isempty(arg.axisLim)
+                    axis(arg.axisLim)
+                end
+                set(gca,'YDir','reverse','FontSize',arg.FontSize)
+                
+                if arg.showTitle
+                    title(arg.titStr)
+                end
                 hold on
                 if arg.pause
                     pause
                 end
-                if args.showRfCen
+                if arg.showRfCen
                     [cx, cy] = fetchn(self & key,'cen_x','cen_y');
                     plot(cx,cy,'r.','MarkerSize',8)
                     text(cx+0.01,cy,sprintf('%u',i))
                 end
+                if arg.showCardinal
+%                     plot([0 0],ylim,'Color',[0.15 0.15 0.15],'linewidth',0.5)
+%                     plot(xlim,[0 0],'Color',[0.5 0.5 0.5],'linewidth',0.5)
+                    set(gca,'XAxisLocation','top','YTickLabel',-get(gca,'YTick'),'Box','Off')
+                    xlabel(sprintf('Azimuth (%s)',degree),'FontSize',arg.FontSize)
+                    ylabel(sprintf('Elevation (%s)',degree),'FontSize',arg.FontSize)
+                end
+                
+            end
+            if nargout
+                varargout{1} = gca;
             end
         end
     end
+    
     
     methods(Static)
         
