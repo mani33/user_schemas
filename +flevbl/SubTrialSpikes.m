@@ -58,9 +58,10 @@ classdef SubTrialSpikes < dj.Relvar
             args.rasterLineWidth = 1;
             args.resp_start_time = -100;
             args.resp_end_time = [];
+            args.LineWidth = 0.5;
             args.bin_width = 10;
             args.axis_col = [1 1 1];
-            args.FontSize = 12;
+            args.FontSize = 8;
             args.t0 = 0;
             args.FontName = 'Arial';
             args.plot_size_inches = [];
@@ -114,7 +115,7 @@ classdef SubTrialSpikes < dj.Relvar
                     PlotTools.ylabel('Trial #','FontSize',args.FontSize,'FontName',args.FontName)
                     set(gca,'FontName',args.FontName)
                 case 'sdf'                    
-                    plot(bin_cen,fr_hz_sm,'k')
+                    plot(bin_cen,fr_hz_sm,'k','Linewidth',args.LineWidth)
                 case 'hist'
                     bar(bin_cen,fr_hz,1,'FaceColor','k')
                 case 'raster-sdf'
@@ -125,7 +126,7 @@ classdef SubTrialSpikes < dj.Relvar
                     PlotTools.xlabel('Time (ms)','FontSize',args.FontSize,'FontName',args.FontName)
                     PlotTools.ylabel('Trial #','FontSize',args.FontSize,'FontName',args.FontName)
                     set(gca,'FontName',args.FontName)
-                    plot(bin_cen,fr_hz_sm * nTrials/max(fr_hz_sm),'r','linewidth',1.5)
+                    plot(bin_cen,fr_hz_sm * nTrials/max(fr_hz_sm),'r','Linewidth',args.LineWidth)
                 otherwise
                     error('plot_type should be one of "raster","sdf","hist"')
             end
