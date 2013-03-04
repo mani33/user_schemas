@@ -9,12 +9,12 @@ cond_idx        : smallint unsigned     # condition index for stimulus
 ---
 is_flash                    : tinyint                       # if flash trial
 is_moving                   : tinyint                       # if moving trial
-is_stop=null                : tinyint                       # is stop condition
-is_init=null                : tinyint                       # if flash init condition is used
+is_stop=0                   : tinyint                       # is flash stop condition
+is_init=0                   : tinyint                       # is flash init condition
 flash_location=null         : smallint unsigned             # flash location index
-bar_color_r                 : tinyint unsigned                      # bar color_R
-bar_color_g                 : tinyint unsigned                      # bar color_G
-bar_color_b                 : tinyint unsigned                      # bar color_B
+bar_color_r                 : tinyint unsigned              # bar color_R
+bar_color_g                 : tinyint unsigned              # bar color_G
+bar_color_b                 : tinyint unsigned              # bar color_B
 trajectory_angle            : smallint                      # traj angle
 traj_offset=null            : smallint                      # trajectory offset
 direction=null              : tinyint                       # right or left direction
