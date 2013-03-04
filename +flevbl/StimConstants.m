@@ -100,14 +100,26 @@ classdef StimConstants < dj.Relvar
             key = util.addFieldIfExists(key,c,'maxStimulusTime','max_stimulus_time');
             key = util.addFieldIfExists(key,c,'interStimulusTime','inter_stimulus_time');
             key = util.addFieldIfExists(key,c,'postStimulusTime','post_stimulus_time');
-            key.flash_stop = c.flashStop;
             if isfield(c,'flashInit')
                 if isnan(c.flashInit)
                     key.flash_init = 0;
                 else
                     key.flash_init = c.flashInit;
                 end
+            else
+                key.flash_init = 0;
             end
+            
+            if isfield(c,'flashStop')
+                if isnan(c.flashStop)
+                    key.flash_stop = 0;
+                else
+                    key.flash_stop = c.flashStop;
+                end
+            else
+                key.flash_stop = 0;
+            end
+            
             key = util.addFieldIfExists(key,c,'combined');
             key = util.addFieldIfExists(key,c,'arrangement');
             key.reward_prob = c.rewardProb;
