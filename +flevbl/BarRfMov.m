@@ -1,12 +1,10 @@
-% flevbl.BarRf This object computes one dimensional receptive field using the flashes in the
-% flash lag experiment.
-% MS 2012-02-04
 %{
-flevbl.BarRf (computed) # my newest table
+flevbl.BarRfMov (computed) # Bar receptive field when another bar moved outside rf
+-> flevbl.BarGrayLevels
+-> flevbl.BarRfParams
 -> flevbl.BinnedSpikeSets
 -> flevbl.SpikeBinParams
--> flevbl.BarRfParams
--> flevbl.BarGrayLevels
+direction : boolean # motion direction
 -----
 bar_size  : tinyblob # width and height of the flashed bars
 flash_centers = Null : mediumblob # center of flashes
@@ -15,70 +13,107 @@ map = Null: mediumblob # 1D receptive field map
 barrf_ts = CURRENT_TIMESTAMP: timestamp   # importing time stamp
 %}
 
-classdef BarRf < dj.Relvar & dj.AutoPopulate
+classdef BarRfMov < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
-        table = dj.Table('flevbl.BarRf')
-        popRel = flevbl.BinnedSpikeSets * flevbl.SpikeBinParams * flevbl.BarRfParams * ...
-            flevbl.BarGrayLevels;
+        table = dj.Table('flevbl.BarRfMov')
+        popRel = ((flevbl.BarGrayLevels*flevbl.BarRfParams*flevbl.BinnedSpikeSets*...
+            flevbl.SpikeBinParams)&flevbl.StimConstants('combined=1'))& flevbl.CombinedFlashOnset  % !!! update the populate relation
     end
-    
     methods
-        function self = BarRf(varargin)
+        function self = BarRfMov(varargin)
             self.restrict(varargin)
         end
     end
     methods(Access = protected)
         function makeTuples(self, key)
+            tuple = key;
             k = fetch(flevbl.StimConstants(key),'bar_size_x','bar_size_y','combined');
-            key.bar_size = [k.bar_size_x; k.bar_size_y];
+            tuple.bar_size = [k.bar_size_x; k.bar_size_y];
             
             c = fetch(flevbl.StimCond(key),'*');
             
             % Get the relational variables
             subTrialRv = flevbl.SubTrials(key);
             binnedSpikeSetsRv = flevbl.BinnedSpikeSets(key);
-            spikesBinnedRv = flevbl.SubTrialSpikesBinned(key);
-            
-            rf_in_arr = unique(fetchn(flevbl.StimCenProxCond('flash_in_rf=1 and mov_shown = 0',...
-                key),'arr_rf_in'));
-            if isfield(c,'arrangement') && k.combined
-                cond = [c.is_flash] & ~[c.is_moving] & [c.arrangement]==rf_in_arr;
-            else % previous version of code/ FLE single type
-                cond = [c.is_flash] & ~[c.is_moving];
-            end
-            cond = find(cond & [c.bar_color_r]==key.bar_gray_level);
-            
-            
-            % Get the same number of trials for all conditions
-            trials = getSubTrialsByConditions(subTrialRv,cond);
-            nT = cellfun(@length,trials);
-            mT = min(nT);
-            trials = cellfun(@(x) x(1:mT),trials,'UniformOutput',false);
-            ttt = [trials{:}];
-            
-            flashCenters = getParamsBySubTrials(subTrialRv,ttt(1,:),'flash_centers');
-            cells = true;
-            
-            % Hack! hack! hack! Don't do this!
-            while cells
-                flashCenters = [flashCenters{:}];
-                if ~iscell(flashCenters)
-                    cells = false;
+            for iDir = 1:2
+                mov_dir = iDir-1;
+                tuple.direction = mov_dir;
+                
+                rf_in_arr = unique(fetchn(flevbl.StimCenProxCond(sprintf('flash_in_rf=1 and mov_shown = 1 and direction = %u',...
+                    mov_dir),key),'arr_rf_in'));
+                if isfield(c,'arrangement')
+                    cond = [c.is_flash] & [c.direction] == mov_dir & [c.is_moving] & ...
+                        [c.arrangement]==rf_in_arr & [c.bar_color_r]==key.bar_gray_level;
+                else % previous version of code/ FLE single type
+                    cond = [c.is_flash] & [c.direction]== mov_dir & [c.is_moving] & ...
+                        [c.bar_color_r]==key.bar_gray_level;
                 end
+                cond_idx = [c(cond).cond_idx];
+                
+                
+                % Get the same number of trials for all conditions
+                trials = getSubTrialsByConditions(subTrialRv,cond_idx);
+                nT = cellfun(@length,trials);
+                mT = min(nT);
+                trials = cellfun(@(x) x(1:mT),trials,'UniformOutput',false);
+                ttt = [trials{:}];
+                
+                flashCenters = getParamsBySubTrials(subTrialRv,ttt(1,:),'flash_centers');
+                cells = true;
+                
+                % Hack! hack! hack! Don't do this!
+                while cells
+                    flashCenters = [flashCenters{:}];
+                    if ~iscell(flashCenters)
+                        cells = false;
+                    end
+                end
+                tuple.flash_centers = flashCenters;
+                
+                % spontaneous activity (Hz)
+                % Adjust spike window because stimulus onset times in the combined case
+                % corresponds to the onset of motion, not onset of flash.
+                % For each flash location, the relative flash onset time will differ. So
+                % we need to compute it for each flash location.
+                nLoc = size(ttt,2);
+                maxFlashOnsetJitter = 1.5; % ms jitter on flash onset between subtrials
+                for iLoc = 1:nLoc
+                    qs = sprintf('subtrial_num in %s',util.array2csvStr(ttt(:,iLoc)));
+                    flash_onsets = fetchn(flevbl.CombinedFlashOnset(key,qs),'t');
+                    mov_onsets = fetchn(flevbl.SubTrials(key,qs),'substim_on');
+                    delay = flash_onsets - mov_onsets;
+                    assert(range(delay) < maxFlashOnsetJitter, 'subtrials differ by more than 1 ms in  event times')
+                    mdelay = median(delay);
+                    
+                    % Get spike counts
+                    sc = fetchn(flevbl.SubTrialSpikesBinned(key, qs),'spike_counts');
+                    b_len = cellfun(@length,sc);
+                    assert(range(b_len)<2,'the difference in total bins between subtrials is more than 1')
+                    
+                    % Get a baseline
+                    adjustedWin = [-key.base_time 0] + mdelay;
+                    binIndices = getBinIndicesForInterval(binnedSpikeSetsRv,adjustedWin);
+                    
+                    scb = cellfun(@(x) x(binIndices), sc,'uni',false);
+                    scb = [scb{:}];
+                    scdata.base(iLoc) = mean(mean(scb));
+                    
+                    % Bar map
+                    adjustedWin = [key.min_lag key.max_lag] + mdelay;
+                    [binIndices, scdata.binCenTimes{iLoc}] = getBinIndicesForInterval(binnedSpikeSetsRv,adjustedWin);
+                    scm = cellfun(@(x) x(binIndices), sc,'uni',false);
+                    scm = [scm{:}];
+                    scdata.map{iLoc} = mean(scm,2) * 1000/key.bin_width;
+                end
+                tuple.base = mean(scdata.base(:)) * 1000/key.bin_width;
+                % Map
+                bt = cellfun(@length,scdata.binCenTimes);
+                mbt = min(bt);
+                map = cellfun(@(x) x(1:mbt),scdata.map,'uni',false);
+                tuple.map = [map{:}];
+                self.insert(tuple);
             end
-            key.flash_centers = flashCenters;
-            
-            % spontaneous activity (Hz)
-            binIndices = getBinIndicesForInterval(binnedSpikeSetsRv,[-key.base_time 0]);
-            sp = getSpikeMatrix(spikesBinnedRv,ttt,binIndices);
-            key.base = mean(sp(:)) * 1000/key.bin_width;
-            
-            % map
-            binIndices = getBinIndicesForInterval(binnedSpikeSetsRv,[key.min_lag key.max_lag]);
-            sp = getSpikeMatrix(spikesBinnedRv,ttt,binIndices);
-            key.map = permute(mean(sp,1),[3 2 1]) * 1000/key.bin_width;
-            self.insert(key);
         end
     end
     
@@ -103,7 +138,7 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             peakInd = nan(1,nUnits);
             SNR = nan(1,nUnits);
             
-            fp = fetch(flevbl.BarRfFit*self ,'*');
+            fp = fetch(flevbl.BarRfMovFit*self ,'*');
             
             
             for iUnit = 1:nUnits
@@ -167,7 +202,7 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
                 % open new figure window or plot in existing one?
                 fig = PlotTools.figure(args.figure);
                 if args.twoDim
-%                     set(gcf,'Position',[158,116,950,464])
+                    %                     set(gcf,'Position',[158,116,950,464])
                 end
                 % plot space-time map
                 if args.twoDim
@@ -233,7 +268,7 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
                 
                 % Show fit
                 if args.showFit
-                    [b,fs] = getFitData(flevbl.BarRfFit(self & key));
+                    [b,fs] = getFitData(flevbl.BarRfMovFit(self & key));
                     xi = linspace(x(1),x(end),25);
                     fn = str2func(fs);
                     yi = fn(b,xi);
@@ -263,7 +298,6 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
                         plot(rf.MapAvg(fetch(rv),'map_type_num=3'));
                         PlotTools.title(sprintf('2D receptive field (unit %u)',p.unit_id));
                     end
-                    
                 end
                 
                 if nKeys > 1 && args.pause
@@ -284,9 +318,9 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             assert(count(self)==1,'Supported only for single tuple relations !')
             p = fetch(self,'min_lag','max_lag','bin_width','base','map');
             
-            lags = p.min_lag:p.bin_width:p.max_lag;
-            lags = lags(1:size(p.map,1));
-            
+            %             lags = p.min_lag:p.bin_width:p.max_lag;
+            %             lags = lags(1:size(p.map,1));
+            lags = linspace(p.min_lag, p.max_lag, size(p.map,1));
             % First find the peak in time and decide the response time window around it.
             spaceAvg = mean(p.map,2);
             opt = optimset('display','off');
@@ -299,13 +333,13 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             x = (1:n)';
             lb = [0 0 0 0];
             ub = [1000 100 max(lags) max(lags)];
-            fp = lsqcurvefit(@flevbl.BarRf.gauss,a,x,yi,lb,ub,opt);
+            fp = lsqcurvefit(@flevbl.BarRfMov.gauss,a,x,yi,lb,ub,opt);
             selLagInd = 1:length(lags);
             if fp(3) >= 1 && fp(3) <= length(lags)
                 % Test significance
                 % ANOVA testing
                 % Model: (yi-ym) = (yhat-ym) + (yi - yhat) => SST = SSM + SSE
-                yhat = flevbl.BarRf.gauss(fp,x);
+                yhat = flevbl.BarRfMov.gauss(fp,x);
                 SSerror= sum((yi - yhat).^2);
                 SSmodel = sum((yhat - mean(yi)).^2);
                 dfm = length(fp)-1; % parameters
@@ -366,20 +400,20 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             tau = p.min_lag+p.bin_width/2:p.bin_width:p.max_lag;
             x = 1:size(p.map,2);
             map = p.map;
-           if args.smooth
-            w = gausswin(5);
-            w = w*w';
-            w = w/sum(w(:));
-            map = imfilter(p.map,w,'same');
-           end
+            if args.smooth
+                w = gausswin(5);
+                w = w*w';
+                w = w/sum(w(:));
+                map = imfilter(p.map,w,'same');
+            end
             imagesc(x,tau,map);
             
             colormap(gray)
             ca = caxis;
             
             set(gca,'YDir','normal','CLim',[0 ca(2)])
-%             c = PlotTools.colorbar;
-%             set(c,'FontSize',args.FontSize);
+            %             c = PlotTools.colorbar;
+            %             set(c,'FontSize',args.FontSize);
             set(gca,'FontSize',args.FontSize);
             
             

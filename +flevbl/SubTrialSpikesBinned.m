@@ -26,7 +26,7 @@ classdef SubTrialSpikesBinned < dj.Relvar
             spikeTrain = fetch1(ephys.Spikes(key),'spike_times');
             
             % Find stim on/off times for all subtrials in the given session (=key)
-            [onsets offsets subtrialNums] = fetchn(flevbl.SubTrials(key),'substim_on','substim_off',...
+            [onsets, offsets, subtrialNums] = fetchn(flevbl.SubTrials(key),'substim_on','substim_off',...
                 'subtrial_num');
             
             tStart = onsets - key.pre_stim_time;
