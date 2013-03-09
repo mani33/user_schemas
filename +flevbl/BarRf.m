@@ -30,6 +30,8 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
     end
     methods(Access = protected)
         function makeTuples(self, key)
+            fprintf('computing -----> ')
+            tic
             k = fetch(flevbl.StimConstants(key),'bar_size_x','bar_size_y','combined');
             key.bar_size = [k.bar_size_x; k.bar_size_y];
             
@@ -38,7 +40,7 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             % Get the relational variables
             subTrialRv = flevbl.SubTrials(key);
             binnedSpikeSetsRv = flevbl.BinnedSpikeSets(key);
-            spikesBinnedRv = flevbl.SubTrialSpikesBinned(key);
+            
             
             rf_in_arr = unique(fetchn(flevbl.StimCenProxCond('flash_in_rf=1 and mov_shown = 0',...
                 key),'arr_rf_in'));
@@ -69,16 +71,28 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             end
             key.flash_centers = flashCenters;
             
+            nLoc = size(ttt,2);
+            binIndices_base = getBinIndicesForInterval(binnedSpikeSetsRv,[-key.base_time 0]);
+            binIndices_map = getBinIndicesForInterval(binnedSpikeSetsRv,[key.min_lag key.max_lag]);
+
+            for iLoc = 1:nLoc
+                qs = sprintf('subtrial_num in %s',util.array2csvStr(ttt(:,iLoc)));
+                sc = fetchn(flevbl.SubTrialSpikesBinned(key,qs),'spike_counts')';
+                sc_base = cellfun(@(x) x(binIndices_base),sc,'uni',false);
+                key.base(:,iLoc) = mean([sc_base{:}],2) * 1000/key.bin_width;
+                
+                sc_map = cellfun(@(x) x(binIndices_map), sc,'uni',false);
+                key.map(:,iLoc) = mean([sc_map{:}],2) * 1000/key.bin_width;
+            end
+            
             % spontaneous activity (Hz)
-            binIndices = getBinIndicesForInterval(binnedSpikeSetsRv,[-key.base_time 0]);
-            sp = getSpikeMatrix(spikesBinnedRv,ttt,binIndices);
-            key.base = mean(sp(:)) * 1000/key.bin_width;
+            key.base = mean(key.base(:));
             
             % map
-            binIndices = getBinIndicesForInterval(binnedSpikeSetsRv,[key.min_lag key.max_lag]);
-            sp = getSpikeMatrix(spikesBinnedRv,ttt,binIndices);
-            key.map = permute(mean(sp,1),[3 2 1]) * 1000/key.bin_width;
+            fprintf('( %0.2f ) -------> Inserting -------->',toc)
+            tic
             self.insert(key);
+            fprintf('( %0.2f )....done\n',toc)
         end
     end
     
@@ -167,7 +181,7 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
                 % open new figure window or plot in existing one?
                 fig = PlotTools.figure(args.figure);
                 if args.twoDim
-%                     set(gcf,'Position',[158,116,950,464])
+                    %                     set(gcf,'Position',[158,116,950,464])
                 end
                 % plot space-time map
                 if args.twoDim
@@ -366,20 +380,20 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             tau = p.min_lag+p.bin_width/2:p.bin_width:p.max_lag;
             x = 1:size(p.map,2);
             map = p.map;
-           if args.smooth
-            w = gausswin(5);
-            w = w*w';
-            w = w/sum(w(:));
-            map = imfilter(p.map,w,'same');
-           end
+            if args.smooth
+                w = gausswin(5);
+                w = w*w';
+                w = w/sum(w(:));
+                map = imfilter(p.map,w,'same');
+            end
             imagesc(x,tau,map);
             
             colormap(gray)
             ca = caxis;
             
             set(gca,'YDir','normal','CLim',[0 ca(2)])
-%             c = PlotTools.colorbar;
-%             set(c,'FontSize',args.FontSize);
+            %             c = PlotTools.colorbar;
+            %             set(c,'FontSize',args.FontSize);
             set(gca,'FontSize',args.FontSize);
             
             
