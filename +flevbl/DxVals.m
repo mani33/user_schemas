@@ -22,7 +22,7 @@ classdef DxVals < dj.Relvar
         
         function makeTuples(self, key)
             c = fetch1(stimulation.StimTrialGroup(key),'stim_constants');
-            dx = c.dx;
+            dx = unique(c.dx);
             for i = 1:length(dx)
                 key.dx = dx(i);
                 save('dkey','key')
