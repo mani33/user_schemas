@@ -26,7 +26,7 @@ classdef SubTrialSpikes < dj.Relvar
             spikeTrain = fetch1(ephys.Spikes(key),'spike_times');
             
             % Find stim on/off times for all subtrials in the given session (=key)
-            [onsets offsets subtrialNums] = fetchn(flevbl.SubTrials(key),'substim_on','substim_off',...
+            [onsets, offsets, subtrialNums] = fetchn(flevbl.SubTrials(key),'substim_on','substim_off',...
                 'subtrial_num');
             
             nSubTrials = length(onsets);
@@ -108,13 +108,13 @@ classdef SubTrialSpikes < dj.Relvar
             switch args.plot_type
                 case 'raster'
                     plot(spikes,y,'k.','MarkerSize',args.rasterDotSize);
-                                        ylim([-2 nTrials+1]);
-
+                    ylim([-2 nTrials+1]);
+                    
                     PlotTools.title(args.titStr)
                     PlotTools.xlabel('Time (ms)','FontSize',args.FontSize,'FontName',args.FontName)
                     PlotTools.ylabel('Trial #','FontSize',args.FontSize,'FontName',args.FontName)
                     set(gca,'FontName',args.FontName)
-                case 'sdf'                    
+                case 'sdf'
                     plot(bin_cen,fr_hz_sm,'k','Linewidth',args.LineWidth)
                 case 'hist'
                     bar(bin_cen,fr_hz,1,'FaceColor','k')
@@ -134,7 +134,7 @@ classdef SubTrialSpikes < dj.Relvar
             axis tight
             title(args.titStr,'fontsize',7);
             if isempty(args.resp_end_time)
-            et = stimTime+postStimTime(1)-args.t0;
+                et = stimTime+postStimTime(1)-args.t0;
             else
                 et = args.resp_end_time;
             end

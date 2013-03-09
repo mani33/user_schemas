@@ -34,7 +34,7 @@ classdef SubTrials < dj.Relvar
             fprintf('Computing tuples')
             tic
             %!!! compute missing fields for key here
-            [trialNum trialParams validTrial] = fetchn(stimulation.StimTrials(key),'trial_num','trial_params','valid_trial');
+            [trialNum, trialParams, validTrial] = fetchn(stimulation.StimTrials(key),'trial_num','trial_params','valid_trial');
             vInd = find(validTrial);
             nVtrials = numel(vInd);
             trialParams = [trialParams{vInd}];
