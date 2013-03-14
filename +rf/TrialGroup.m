@@ -34,7 +34,7 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
     methods
         function varargout = plotMapForTetArray(self,xylim_deg,col)
             % Supported only for multiunits currently
-            
+                     
             if nargin < 2
                 xylim_deg = [];
                 col = [0 0 0.8];
@@ -49,14 +49,15 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
                 pos = [ori width height];
             end
             key = fetch(self * acq.Subjects * acq.Sessions,'*');
+            assert(length(key)~=0,'The requested tuple does not exit')
             assert(length(key)==1,'Supported for one tuple only')
             
             tetArrayLayout = getTetrodeArrayLayout(key.subject_name,1);
-            [nRows nCols] = size(tetArrayLayout);
+            [nRows, nCols] = size(tetArrayLayout);
             c = 0;
             figure;
             font_size = 6;
-            set(gcf,'Position',[360,47,613,651])
+            set(gcf,'Position',[147 1172 956 665])
             dot_size = fetch1(rf.StimConstants(key),'dot_size');
             dnx = fetch1(rf.StimConstants(key),'dot_num_x');
             dny = fetch1(rf.StimConstants(key),'dot_num_y');
@@ -111,7 +112,7 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
             dotSizeDeg = dot_size/fetch1(vstim.PixPerDeg(self),'pix_per_deg');
             ms_suptitle([key.subject_name '  ' sds sprintf('   dotSize: %0.2f deg',dotSizeDeg)]);
             if nargout
-                varargout{1} = key.session_datetime(1:10);
+                varargout{1} = [key.subject_name '_' sds '.png'];
             end
         end
         
