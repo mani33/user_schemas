@@ -57,7 +57,7 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
             c = 0;
             figure;
             font_size = 6;
-            set(gcf,'Position',[147 1172 956 665])
+%             set(gcf,'Position',[147 1172 956 665])
             dot_size = fetch1(rf.StimConstants(key),'dot_size');
             dnx = fetch1(rf.StimConstants(key),'dot_num_x');
             dny = fetch1(rf.StimConstants(key),'dot_num_y');
