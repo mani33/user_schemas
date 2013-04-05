@@ -40,8 +40,10 @@ classdef BarRfFit < dj.Relvar & dj.AutoPopulate
                 yi = sm;
                 lb = [0 0 0 0];
                 ub = [1000 100 length(x) length(x)];
-                key.fit_params = lsqcurvefit(@flevbl.BarRfFit.gauss,a,x,yi,lb,ub,opt);
-                key.resid = (flevbl.BarRfFit.gauss(key.fit_params,x) - yi) / norm(yi);
+                if length(yi) > length(lb) % In one session, there were only 3 flash locations. You can't fit 4 parameters for a 3 point data set
+                    key.fit_params = lsqcurvefit(@flevbl.BarRfFit.gauss,a,x,yi,lb,ub,opt);
+                    key.resid = (flevbl.BarRfFit.gauss(key.fit_params,x) - yi) / norm(yi);
+                end
             end
             self.insert(key)
         end
@@ -52,6 +54,11 @@ classdef BarRfFit < dj.Relvar & dj.AutoPopulate
             b = x.fit_params;
             res = x.resid;
             fn = self.fit_fun;
+        end
+        function cen = get_center(self)
+            keys = fetch(self);
+            fp = arrayfun(@(k) fetch1(flevbl.BarRfFit(k),'fit_params'), keys, 'uni',false);
+            cen = cellfun(@(p) p(3), fp);
         end
         
         function p = getSignificanceOfFit(self)
