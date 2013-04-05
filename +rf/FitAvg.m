@@ -24,7 +24,7 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
         function makeTuples(self, key)
             
             map = fetch1(rf.MapAvg(key),'map');
-            [xGrid yGrid] = getGrid(rf.Map(key),'deg');
+            [xGrid, yGrid] = getGrid(rf.Map(key),'deg');
             
             % apply smoothing
             n = 5;
@@ -163,106 +163,109 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             arg.smooth = 5;
             arg.axis = [];
             arg.mahalDist = 1;
-            arg.outlineOnly = false;
+            arg.outlineOnly = true;
             arg.pause = false;
-            arg.showTitle = false;
-            arg.showRfCen = false;
+            arg.showTitle = true;
+            arg.showRfCen = true;
             arg.titStr = [];
             arg.axisLim = [];
+            arg.axisFontSize = 6;
             arg.FontSize = 8;
+            arg.FontName = 'Helvetica';
             arg.outlineColor = 'k';
             arg.showCardinal = true;
             arg.LineWidth = 0.5;
+            arg.labels_off = false;
             arg = parseVarArgs(arg,varargin{:});
             
             % get all map data
-            keys = fetch(self);
-            nKeys = length(keys);
-            for i = 1:nKeys
-                key = keys(i);
-                arg.titStr = sprintf('%u',i);
-                % Get title string
-                if arg.showTitle
-                    [elecNum, unitId] = fetchn(ephys.Spikes(key),'electrode_num','unit_id');
-                    sessPath = fetch1(acq.Sessions(key),'session_path');
-                    [~,spStr] = fileparts(sessPath);
-                    if isempty(arg.titStr)
-                        arg.titStr = [spStr sprintf('  elec: %u unit_id: %u',elecNum,unitId)];
-                    end
+            key = fetch(self);
+            
+            arg.titStr = sprintf('%u',key.unit_id);
+            % Get title string
+            if arg.showTitle
+                [elecNum, unitId] = fetch1(ephys.Spikes(key),'electrode_num','unit_id');
+                sessPath = fetch1(acq.Sessions(key),'session_path');
+                [~,spStr] = fileparts(sessPath);
+                if isempty(arg.titStr)
+                    arg.titStr = [spStr sprintf('  elec: %u unit_id: %u',elecNum,unitId)];
                 end
-                md = fetch(rf.MapAvg(key),'*');
-                
-                % get grid
-                [x, y] = getGrid(rf.Map(key),'deg');
-                if ~isempty(arg.axis)
-                    axes(arg.axis)
-                end
-                
-                % smooth map
-                w = gausswin(arg.smooth);
-                w = w*w';
-                w = w/sum(w(:));
-                map = imfilter(md.map,w,'same');
-                
-                % plot map
-                if ~arg.outlineOnly
-                    h = imagesc(x,y,map);
-                    hold on
-                end
-                
-                if size(map,1)==size(map,2)
-                    PlotTools.sqAx;
-                end
-                
-                
-                
-                
-                if ~arg.outlineOnly
-                    % plot meridians
-                    plot(xlim,[0 0],'w');
-                    plot([0 0],ylim,'w');
-                    hold on
-                end
-                % Plot outline of receptive field now.
-                [ox, oy] = getOutline(self & key,arg.mahalDist);
-                if ~arg.outlineOnly
-                    plot(ox,oy,'w');
-                else
-                    plot(ox,oy,'Color',arg.outlineColor,'linewidth',arg.LineWidth);
-                    %                     set(gca,'YTickLabel',-get(gca,'YTick'));
-                end
-                axis image
-                if ~isempty(arg.axisLim)
-                    axis(arg.axisLim)
-                end
-                set(gca,'YDir','reverse','FontSize',arg.FontSize)
-                
-                if arg.showTitle
-                    title(arg.titStr)
-                end
+            end
+            md = fetch(rf.MapAvg(key),'*');
+            
+            % get grid
+            [x, y] = getGrid(rf.Map(key),'deg');
+            if ~isempty(arg.axis)
+                axes(arg.axis)
+            end
+            
+            % smooth map
+            w = gausswin(arg.smooth);
+            w = w*w';
+            w = w/sum(w(:));
+            map = imfilter(md.map,w,'same');
+            
+            % plot map
+            if ~arg.outlineOnly
+                imagesc(x,y,map);
                 hold on
-                if arg.pause
-                    pause
-                end
-                if arg.showRfCen
-                    [cx, cy] = fetchn(self & key,'cen_x','cen_y');
-                    plot(cx,cy,'r.','MarkerSize',8)
-                    text(cx+0.01,cy,sprintf('%u',i))
-                end
-                if arg.showCardinal
-%                     plot([0 0],ylim,'Color',[0.15 0.15 0.15],'linewidth',0.5)
-%                     plot(xlim,[0 0],'Color',[0.5 0.5 0.5],'linewidth',0.5)
-                    set(gca,'XAxisLocation','top','YTickLabel',-get(gca,'YTick'),'Box','Off')
-                    xlabel(sprintf('Azimuth (%s)',degree),'FontSize',arg.FontSize)
-                    ylabel(sprintf('Elevation (%s)',degree),'FontSize',arg.FontSize)
-                end
-                
+            end
+            
+            %                 if size(map,1)==size(map,2)
+            %                     PlotTools.sqAx;
+            %                 end
+            
+            if ~arg.outlineOnly
+                % plot meridians
+                plot(xlim,[0 0],'w');
+                plot([0 0],ylim,'w');
+                hold on
+            end
+            % Plot outline of receptive field now.
+            [ox, oy] = getOutline(self & key,arg.mahalDist);
+            if ~arg.outlineOnly
+                plot(ox,oy,'w');
+            else
+                plot(ox,oy,'Color',arg.outlineColor,'linewidth',arg.LineWidth);
+                %                     set(gca,'YTickLabel',-get(gca,'YTick'));
+            end
+            %                 axis image
+            if ~isempty(arg.axisLim)
+                axis(arg.axisLim)
+            end
+            set(gca,'YDir','reverse','FontSize',arg.axisFontSize,'FontName',arg.FontName)
+            
+            if arg.showTitle
+                title(arg.titStr)
+            end
+            hold on
+            if arg.pause
+                pause
+            end
+            if arg.showRfCen
+                [cx, cy] = fetchn(self & key,'cen_x','cen_y');
+                plot(cx,cy,'r.','MarkerSize',8)
+                text(cx+0.01,cy,sprintf('%u',key.unit_id))
+            end
+            
+            %                 if arg.showCardinal
+            %                     plot([0 0],ylim,'Color',[0.15 0.15 0.15],'linewidth',0.5)
+            %                     plot(xlim,[0 0],'Color',[0.5 0.5 0.5],'linewidth',0.5)
+            %                 end
+            
+            set(gca,'XAxisLocation','top','YTickLabel',-get(gca,'YTick'),'Box','Off')
+            if ~arg.labels_off
+                xlabel(sprintf('Azimuth (%s)',degree),'FontSize',arg.FontSize)
+                ylabel(sprintf('Elevation (%s)',degree),'FontSize',arg.FontSize)
             end
             if nargout
                 varargout{1} = gca;
             end
         end
+        
     end
+    
+    
     
     
     methods(Static)
