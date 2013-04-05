@@ -17,7 +17,7 @@ bar_color_g                 : tinyint unsigned              # bar color_G
 bar_color_b                 : tinyint unsigned              # bar color_B
 trajectory_angle            : smallint                      # traj angle
 traj_offset=null            : smallint                      # trajectory offset
-direction=null              : tinyint                       # right or left direction
+direction                   : tinyint                       # direction of motion
 dx=null                     : smallint unsigned             # change in pixels per frame
 arrangement=null            : tinyint                       # blah
 %}
@@ -56,7 +56,14 @@ classdef StimCond < dj.Relvar
                 tuple.trajectory_angle = cc(iCond).condition_info.trajectoryAngle;
                 
                 tuple = util.addFieldIfExists(tuple,cc(iCond).condition_info,'trajOffset','traj_offset');
-                tuple = util.addFieldIfNotNan(tuple,'direction',cc(iCond).condition_info.direction);
+                % For flash only condition, set the direction to -1 instead of NaN
+                curr_dir = cc(iCond).condition_info.direction;
+                if logical(tuple.is_flash) && ~logical(tuple.is_moving)
+                    if isnan(curr_dir)
+                        curr_dir = -1;
+                    end
+                end
+                tuple = util.addFieldIfNotNan(tuple,'direction',curr_dir);
                 tuple = util.addFieldIfNotNan(tuple,'dx',cc(iCond).condition_info.dx);
                 tuple = util.addFieldIfExists(tuple,cc(iCond).condition_info,'arrangement');
                
