@@ -136,5 +136,33 @@ classdef StimConstants < dj.Relvar
             key.folder = c.folder;
             self.insert(key)
         end
+        function barRects = get_flash_rect_deg(self,flash_loc_ind,varargin)
+            % bp = get_flash_position_deg(key,flash_loc_ind)
+            args.bar_gray_level = 255;
+            args = parse_var_args(args,varargin{:});
+            keys = fetch(self);
+            nKeys = length(keys);
+            barRects = cell(1,nKeys);
+            for iKey = 1:nKeys
+                key = keys(iKey);
+                qs = sprintf('bar_color_r = %u and flash_in_rf=1 and flash_shown=1 and mov_shown=0',...
+                    args.bar_gray_level);
+                cqs = sprintf('flash_location = %u',flash_loc_ind);
+                ppd = fetch1(vstim.PixPerDeg(key),'pix_per_deg');
+                flash_cond_idx = fetch1(flevbl.StimCond(key,cqs,fetch(flevbl.StimCenProxCond(key,qs))),'cond_idx');
+                flash_cen = fetch1(flevbl.SubTrials(key,sprintf('cond_idx = %u',flash_cond_idx)),'flash_centers',1);
+                flash_cen = (flash_cen{:} - [fetch1(flevbl.StimConstants(key),'monitor_center_x');fetch1(flevbl.StimConstants(key),'monitor_center_y')])/ppd;
+                [bw, bh] = fetchn(flevbl.StimConstants(key),'bar_size_x','bar_size_y');
+                bw = bw/ppd;
+                bh = bh/ppd;
+                bp(1) = flash_cen(1) - bw/2;
+                bp(2) = -(flash_cen(2) + bh/2);
+                bp(3:4) = [bw bh];
+                barRects{iKey} = bp;
+            end
+            if nKeys==1
+                barRects = [barRects{:}];
+            end
+        end
     end
 end
