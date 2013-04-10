@@ -30,7 +30,7 @@ classdef SpikeSets < dj.Relvar & dj.AutoPopulate
         end
     end
     methods
-        function [mfr_dir0 mfr_dir1] = getDirSelResp(self,dx,resp_win_start,resp_win_end)
+        function [mfr_dir0, mfr_dir1] = getDirSelResp(self,dx,resp_win_start,resp_win_end)
             % function dsi = getDirSelInd(self,dx,resp_win_start,resp_win_end)
             
             key = fetch(self);

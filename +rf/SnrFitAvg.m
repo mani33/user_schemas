@@ -25,9 +25,9 @@ classdef SnrFitAvg < dj.Relvar & dj.AutoPopulate
             cy = fd(2);
             covMat = [fd(3) fd(5); fd(5) fd(4)];
             
-            [x y] = getGrid(rf.Map(key),'deg');
+            [x, y] = getGrid(rf.Map(key),'deg');
             
-            [xm ym] = meshgrid(x,y);
+            [xm, ym] = meshgrid(x,y);
             allLocs = [xm(:) ym(:)]';
             
             % Compute mahalanobis distance of all pixels to the center
