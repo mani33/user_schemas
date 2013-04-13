@@ -141,6 +141,7 @@ classdef SpikeSets < dj.Relvar & dj.AutoPopulate
             args.is_stop = false;
             args.Position = [];
             args.rasterLineWidth = 0.5;
+            args.bar_gray_level = 255;
             args = parse_var_args(args,varargin{:});
             argsList = struct2argList(args);
             

@@ -33,17 +33,11 @@ classdef PsthMov < dj.Relvar & dj.AutoPopulate
         function makeTuples(self, key)
             tup = key;
             % Compute bin_width
-            T = fetch1(vstim.RefreshPeriod(key),'refresh_period_msec');
+            
             bar_width = fetch1(flevbl.StimConstants(key),'bar_size_x');
             f = bar_width/key.bar_cen_spacing_pix;
             % Make sure that the bar width is a integer multiple of bar_cen_spacing_pix
             assert((f-round(f))==0, 'bar width should be an integer multiple of bar_cen_spacing_pix')
-            
-            bw = T/f;
-            tup.bin_width = bw;
-            
-            n_pre_stim_bins = round(key.pre_stim_time/bw);
-            n_post_stim_bins = round(key.post_stim_time/bw);
             
             ppd = fetch1(vstim.PixPerDeg(key),'pix_per_deg');
             
@@ -73,34 +67,52 @@ classdef PsthMov < dj.Relvar & dj.AutoPopulate
                 bar_centers = bar_centers(good);
             end
             traj_rel_times = [traj_rel_times{:}];
-            traj_rel_times = median(traj_rel_times,2);
+            
+            % Check similarity of time stamps across trials
+            rt = range(traj_rel_times,2);
+            assert(max(rt) < 2, 'time stamps for location differ by more than 1.5 ms across trials')
+            
+            traj_t = median(traj_rel_times,2);
+            traj_t = traj_t - traj_t(1);
             nTrials = length(trialSpikes);
             tup.n = nTrials;
            
+            bw = mean(diff(traj_t))/f;
+            n_pre_stim_bins = round(key.pre_stim_time/bw);
+            n_post_stim_bins = round(key.post_stim_time/bw);
+            tup.bin_width = bw;
+            
             %------------------------------------------------------------------
             
             % 1. Get trajectory bar centers relative to monitor center in pixels
             traj_bar_cen_pix = bar_centers{1}{:};
-            
-            traj_bar_cen_pix_x = traj_bar_cen_pix(1,:) - fetch1(flevbl.StimConstants(key),'monitor_center_x');
-            traj_s =  traj_bar_cen_pix_x/ppd;
-            traj_t = traj_rel_times-traj_rel_times(1);
+            traj_s = traj_bar_cen_pix(1,:) - fetch1(flevbl.StimConstants(key),'monitor_center_x');
             
             % Get bin edges: trajectory times should end up being bin centers
-            nTrajBins = round((traj_rel_times(end)-traj_rel_times(1))/bw);
-            bin_cen = (-n_pre_stim_bins:(nTrajBins+n_post_stim_bins))*bw;
+            nTrajLocs = round((traj_t(end)-traj_t(1))/bw)+1;
+            % Make finer space and time bins
+            traj_ti = linspace(traj_t(1),traj_t(end),nTrajLocs);
+            traj_si = linspace(traj_s(1),traj_s(end),nTrajLocs);
+            bs = diff(traj_si(1:2));
+            
+            % Extend the 'traj' now to include pre_stim_time and post_stim_time
+            traj_ti_ext = [((-n_pre_stim_bins:-1)*bw)+traj_ti(1)    traj_ti   traj_ti(end)+(1:n_post_stim_bins)*bw]; 
+            % Catenate according to the direction of motion
+            traj_si_ext = [((-n_pre_stim_bins:-1)*bs)+traj_si(1)    traj_si   traj_si(end)+(1:n_post_stim_bins)*bs]; 
+            
+            bin_cen = traj_ti_ext;
             bin_edges = [bin_cen bin_cen(end)+bw]-bw/2 ;
             
             tup.bin_cen_times = bin_cen';
-            tup.is_traj = [false(1,n_pre_stim_bins) true(1,nTrajBins+1) false(1,n_post_stim_bins)]';
-            tup.bin_cen_space = interp1(traj_t,traj_s,bin_cen)';
+            tup.is_traj = [false(1,n_pre_stim_bins) true(1,nTrajLocs) false(1,n_post_stim_bins)]';
+            tup.bin_cen_space = traj_si_ext'/ppd;
             
             % Find which space points were interploated ones 
-            nTrajLocs = nTrajBins + 1;
             traj_locs = false(1,nTrajLocs);
             traj_locs(1:f:end) = true;            
             tup.is_stim_space = [false(1,n_pre_stim_bins) traj_locs false(1,n_post_stim_bins)]';
             
+            assert(all(ismember(traj_s, traj_si)),'Interpolation missed some stimulated spatial locations')
             % Get binned spikes
             bspk = cat(1,trialSpikes{:});
             bc = histc(bspk,bin_edges);
