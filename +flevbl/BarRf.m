@@ -291,7 +291,7 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             end
         end
         
-        function [r lags] = getSpatialMap(self)
+        function [r, lags] = getSpatialMap(self)
             % Get spatial receptive field profile by integrating over time.
             % r = getSpatialMap(self);
             % MS 2012-06-24

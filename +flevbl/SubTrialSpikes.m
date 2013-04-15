@@ -74,10 +74,10 @@ classdef SubTrialSpikes < dj.Relvar
             
             [spikeTimes,  postStimTime] = fetchn(self,'spike_times','post_stim_time');
             nTrials = length(spikeTimes);
-            if nTrials > 200
-                rp = randperm(nTrials);
-                spikeTimes = spikeTimes(rp(1:200));
-            end
+%             if nTrials > 200
+%                 rp = randperm(nTrials);
+%                 spikeTimes = spikeTimes(rp(1:200));
+%             end
             
             e = cellfun(@(x) isempty(x),spikeTimes);
             spikeTimes(e) = {[]};
