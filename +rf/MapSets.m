@@ -29,6 +29,9 @@ classdef MapSets < dj.Relvar & dj.AutoPopulate
     methods
         function plot(self,varargin)
             
+            args.show_tit = true;
+            args = parse_var_args(args,varargin{:});
+            
             figure
             set(gcf,'Position',[296,183,646,478])
             
@@ -59,6 +62,19 @@ classdef MapSets < dj.Relvar & dj.AutoPopulate
                 plot(rf.MapAvg(key , sprintf('map_type_num = %u',map_type_num(i))));
                 ctitle('Avg',i==1);
             end
+            if args.show_tit
+                ms_suptitle(get_tit(self));
+            end
+        end
+        function fn = get_tit(self)
+            ekey = fetch(self);
+            subj = fetch1(acq.Subjects(ekey),'subject_name');
+            vis = fetch1(sess.ElecLoc(ephys.Spikes(ekey)),'vis_area_num');
+            elec = fetch1(ephys.Spikes(ekey),'electrode_num');
+            ut = {'multi-unit','single-unit'};
+            utype = ut{ekey.sort_method_num - 3};
+            sessdt = getDateStrFromPathStr(fetch1(acq.Sessions(ekey),'session_path'));
+            fn = sprintf('%s_V%u_elec_%u_unit_id_%u_%s_%s',subj, vis, elec, ekey.unit_id, utype,sessdt);
         end
     end
 end

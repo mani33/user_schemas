@@ -161,11 +161,11 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
         function varargout = plot(self,varargin)
             
             arg.smooth = 5;
-            arg.axis = [];
+            arg.axes = [];
             arg.mahalDist = 1;
             arg.outlineOnly = true;
             arg.pause = false;
-            arg.showTitle = true;
+            arg.show_tit = true;
             arg.showRfCen = true;
             arg.titStr = [];
             arg.axisLim = [];
@@ -183,7 +183,7 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             
             arg.titStr = sprintf('%u',key.unit_id);
             % Get title string
-            if arg.showTitle
+            if arg.show_tit
                 [elecNum, unitId] = fetch1(ephys.Spikes(key),'electrode_num','unit_id');
                 sessPath = fetch1(acq.Sessions(key),'session_path');
                 [~,spStr] = fileparts(sessPath);
@@ -195,8 +195,8 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             
             % get grid
             [x, y] = getGrid(rf.Map(key),'deg');
-            if ~isempty(arg.axis)
-                axes(arg.axis)
+            if ~isempty(arg.axes)
+                axes(arg.axes)
             end
             
             % smooth map
@@ -235,7 +235,7 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             end
             set(gca,'YDir','reverse','FontSize',arg.axisFontSize,'FontName',arg.FontName)
             
-            if arg.showTitle
+            if arg.show_tit
                 title(arg.titStr)
             end
             hold on

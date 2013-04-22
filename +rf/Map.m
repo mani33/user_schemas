@@ -184,7 +184,7 @@ classdef Map < dj.Relvar
         
         
         
-        function [xGrid yGrid] = getGrid(self,gridUnit)
+        function [xGrid, yGrid] = getGrid(self,gridUnit)
             %   [xGrid yGrid] = getGrid(self,'pix')
             %   [xGrid yGrid] = getGrid(self,'deg')
             

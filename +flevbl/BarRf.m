@@ -362,6 +362,7 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             args.xAxisInDeg = true;
             args.resp_win_end = 120;
             args.FontSize = 7;
+            args.show_tit = true;
             args.smooth = false;
             args = parseVarArgs(args,varargin{:});
             
@@ -412,9 +413,11 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
                 
                 set(mh,'XTick',x(1:3:end),'XTickLabel',xDeg);
             end
+            if args.show_tit
             elec_num = fetch1(ephys.Spikes(key),'electrode_num');
             titStr = sprintf('electrode num: %u',elec_num);
             title(titStr)
+            end
             % return handle?
             if nargout > 0
                 varargout{1} = fig;
