@@ -64,7 +64,8 @@ classdef SubTrialSpikes < dj.Relvar
             args.FontSize = 8;
             args.t0 = 0;
             args.FontName = 'Arial';
-            args.plot_size_inches = [];
+            args.show_events = true;
+            args.plot_size_centimeters = [];
             args.plot_type = 'raster'; % can be 'raster','sdf','hist' or 'raster-sdf'
             args = parseVarArgs(args,varargin{:});
             
@@ -112,7 +113,7 @@ classdef SubTrialSpikes < dj.Relvar
                     
                     PlotTools.title(args.titStr)
                     PlotTools.xlabel('Time (ms)','FontSize',args.FontSize,'FontName',args.FontName)
-                    PlotTools.ylabel('Trial #','FontSize',args.FontSize,'FontName',args.FontName)
+                    PlotTools.ylabel('Trial number','FontSize',args.FontSize,'FontName',args.FontName)
                     set(gca,'FontName',args.FontName)
                 case 'sdf'
                     plot(bin_cen,fr_hz_sm,'k','Linewidth',args.LineWidth)
@@ -124,7 +125,7 @@ classdef SubTrialSpikes < dj.Relvar
                     hold on
                     PlotTools.title(args.titStr)
                     PlotTools.xlabel('Time (ms)','FontSize',args.FontSize,'FontName',args.FontName)
-                    PlotTools.ylabel('Trial #','FontSize',args.FontSize,'FontName',args.FontName)
+                    PlotTools.ylabel('Trial number','FontSize',args.FontSize,'FontName',args.FontName)
                     set(gca,'FontName',args.FontName)
                     plot(bin_cen,fr_hz_sm * nTrials/max(fr_hz_sm),'r','Linewidth',args.LineWidth)
                 otherwise
@@ -142,15 +143,19 @@ classdef SubTrialSpikes < dj.Relvar
             xlim([args.resp_start_time et]);
             % plot stim on and off
             hold on
-            plot(0,0,'*','color',[0 0.5 0])
-            plot(stimTime,0,'*r')
+            
+            %
+            if args.show_events
+                plot(0,0,'*','color',[0 0.5 0])
+                plot(stimTime,0,'*r')
+            end
             set(gca,'FontSize',args.FontSize,'FontName','Arial','Box','Off',...
                 'Color',args.axis_col)
             
-            if ~isempty(args.plot_size_inches)
-                set(gca,'Units','inches');
+            if ~isempty(args.plot_size_centimeters)
+                set(gca,'Units','centimeters');
                 p = get(gca,'Position');
-                p([3 4]) = args.plot_size_inches;
+                p([3 4]) = args.plot_size_centimeters;
                 set(gca,'Position',p);
                 box off
             end

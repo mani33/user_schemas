@@ -183,8 +183,8 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             
             arg.titStr = sprintf('%u',key.unit_id);
             % Get title string
+            [elecNum, unitId] = fetch1(ephys.Spikes(key),'electrode_num','unit_id');
             if arg.show_tit
-                [elecNum, unitId] = fetch1(ephys.Spikes(key),'electrode_num','unit_id');
                 sessPath = fetch1(acq.Sessions(key),'session_path');
                 [~,spStr] = fileparts(sessPath);
                 if isempty(arg.titStr)
@@ -245,7 +245,7 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             if arg.showRfCen
                 [cx, cy] = fetchn(self & key,'cen_x','cen_y');
                 plot(cx,cy,'r.','MarkerSize',8)
-                text(cx+0.01,cy,sprintf('%u',key.unit_id))
+                text(cx+0.01,cy,sprintf('%u',elecNum))
             end
             
             %                 if arg.showCardinal

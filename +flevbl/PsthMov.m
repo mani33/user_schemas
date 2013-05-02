@@ -117,7 +117,7 @@ classdef PsthMov < dj.Relvar & dj.AutoPopulate
             bspk = cat(1,trialSpikes{:});
             bc = histc(bspk,bin_edges);
             bc = bc(1:end-1);
-            tup.mean_fr  = bc*(1000/bw)/nTrials;
+            tup.mean_fr  = bc(:)*(1000/bw)/nTrials;
             
             self.insert(tup)
         end
