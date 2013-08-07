@@ -371,7 +371,7 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
             if ~isempty(args.axes)
                 axes(args.axes)
             else
-                set(gcf,'Position',[360,437,425,261])
+%                 set(gcf,'Position',[360,437,425,261])
             end
             % plot space-time map
             key = fetch(self);
@@ -387,9 +387,9 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
                 w = w/sum(w(:));
                 map = imfilter(p.map,w,'same');
             end
-            imagesc(x,tau,map);
+            imagesc(tau,x,map');
             
-            colormap(gray)
+%             colormap(gray)
             ca = caxis;
             
             set(gca,'YDir','normal','CLim',[0 ca(2)])
@@ -411,7 +411,9 @@ classdef BarRf < dj.Relvar & dj.AutoPopulate
                 
                 xDeg = round(xDeg * 100)/100;
                 
-                set(mh,'XTick',x(1:3:end),'XTickLabel',xDeg);
+%                 set(mh,'XTick',x(1:3:end),'XTickLabel',xDeg);
+                                set(mh,'YTick',x(1:3:end),'YTickLabel',xDeg);
+
             end
             if args.show_tit
             elec_num = fetch1(ephys.Spikes(key),'electrode_num');

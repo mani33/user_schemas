@@ -63,6 +63,7 @@ classdef SubTrialSpikes < dj.Relvar
             args.axis_col = [1 1 1];
             args.FontSize = 8;
             args.t0 = 0;
+            args.manuscript = true;
             args.FontName = 'Arial';
             args.show_events = true;
             args.plot_size_centimeters = [];
@@ -82,11 +83,13 @@ classdef SubTrialSpikes < dj.Relvar
             
             e = cellfun(@(x) isempty(x),spikeTimes);
             spikeTimes(e) = {[]};
+            if args.t0
+                spikeTimes = cellfun(@(x) x-args.t0, spikeTimes,'uni',false);
+%                 spikes = spikes - args.t0;
+            end
             spikes = cat(1,spikeTimes{:});
             
-            if args.t0
-                spikes = spikes - args.t0;
-            end
+            
             
             y = 1:length(spikeTimes);
             y = cellfun(@(x,s) x*ones(1,length(s)),num2cell(y),spikeTimes','uni',false);
@@ -108,13 +111,36 @@ classdef SubTrialSpikes < dj.Relvar
             end
             switch args.plot_type
                 case 'raster'
-                    plot(spikes,y,'k.','MarkerSize',args.rasterDotSize);
-                    ylim([-2 nTrials+1]);
-                    
+                    switch args.rasterType
+                        case 'dot'
+                            plot(spikes,y,'k.','MarkerSize',args.rasterDotSize);
+                            ylim([-2 nTrials+1]);
+                        case 'line'
+                            nTrials = length(spikeTimes);
+                            for iTrial = 1:nTrials
+                                st = spikeTimes{iTrial};
+                                if ~isempty(st)
+                                    X = repmat(st,1,2)';
+                                    ns = length(st);
+                                    Y = repmat(iTrial,1,ns);
+                                    Y = [Y-0.45; Y+0.45];
+                                    line(X,Y,'Color','k')
+                                    hold on
+                                end
+                            end
+                        otherwise
+                            error('unknown raster type')
+                    end
+                    if args.manuscript
+                        mtitle(args.titStr)
+                        mxlabel('Time (ms)')
+                        mylabel('Trial number')
+                    else
                     PlotTools.title(args.titStr)
                     PlotTools.xlabel('Time (ms)','FontSize',args.FontSize,'FontName',args.FontName)
                     PlotTools.ylabel('Trial number','FontSize',args.FontSize,'FontName',args.FontName)
                     set(gca,'FontName',args.FontName)
+                    end
                 case 'sdf'
                     plot(bin_cen,fr_hz_sm,'k','Linewidth',args.LineWidth)
                 case 'hist'
@@ -123,10 +149,16 @@ classdef SubTrialSpikes < dj.Relvar
                     ylim([0 nTrials+1]);
                     plot(spikes,y,'k.','MarkerSize',args.rasterDotSize);
                     hold on
-                    PlotTools.title(args.titStr)
-                    PlotTools.xlabel('Time (ms)','FontSize',args.FontSize,'FontName',args.FontName)
-                    PlotTools.ylabel('Trial number','FontSize',args.FontSize,'FontName',args.FontName)
-                    set(gca,'FontName',args.FontName)
+                    if args.manuscript
+                        mtitle(args.titStr)
+                        mxlabel('Time (ms)')
+                        mylabel('Trial number')
+                    else
+                        PlotTools.title(args.titStr)
+                        PlotTools.xlabel('Time (ms)','FontSize',args.FontSize,'FontName',args.FontName)
+                        PlotTools.ylabel('Trial number','FontSize',args.FontSize,'FontName',args.FontName)
+                        set(gca,'FontName',args.FontName)
+                    end
                     plot(bin_cen,fr_hz_sm * nTrials/max(fr_hz_sm),'r','Linewidth',args.LineWidth)
                 otherwise
                     error('plot_type should be one of "raster","sdf","hist"')

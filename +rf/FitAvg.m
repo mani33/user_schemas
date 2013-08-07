@@ -98,7 +98,7 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
         function diaDeg = getSize(self,mahalDist)
             %         function diaDeg = getSize(self,mahalDist)
             if nargin < 2
-                mahalDist = 1;
+                mahalDist = 2;
             end
             keys = fetch(self);
             nKeys = length(keys);
@@ -170,12 +170,15 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             arg.titStr = [];
             arg.axisLim = [];
             arg.axisFontSize = 6;
+            arg.manuscript = true;
             arg.FontSize = 8;
             arg.FontName = 'Helvetica';
             arg.outlineColor = 'k';
             arg.showCardinal = true;
             arg.LineWidth = 0.5;
             arg.labels_off = false;
+            arg.colormap = 'Jet';
+            arg.colorbar = false;
             arg = parseVarArgs(arg,varargin{:});
             
             % get all map data
@@ -215,16 +218,16 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             %                     PlotTools.sqAx;
             %                 end
             
-            if ~arg.outlineOnly
-                % plot meridians
-                plot(xlim,[0 0],'w');
-                plot([0 0],ylim,'w');
-                hold on
-            end
+            %             if ~arg.outlineOnly
+            % %                 % plot meridians
+            % %                 plot(xlim,[0 0],'w');
+            % %                 plot([0 0],ylim,'w');
+            % %                 hold on
+            %             end
             % Plot outline of receptive field now.
             [ox, oy] = getOutline(self & key,arg.mahalDist);
             if ~arg.outlineOnly
-                plot(ox,oy,'w');
+                plot(ox,oy,'Color',arg.outlineColor,'linewidth',arg.LineWidth);
             else
                 plot(ox,oy,'Color',arg.outlineColor,'linewidth',arg.LineWidth);
                 %                     set(gca,'YTickLabel',-get(gca,'YTick'));
@@ -236,7 +239,12 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             set(gca,'YDir','reverse','FontSize',arg.axisFontSize,'FontName',arg.FontName)
             
             if arg.show_tit
-                title(arg.titStr)
+                if arg.manuscript
+                    mtitle(args.titStr)
+                else
+                    title(arg.titStr)
+                end
+                
             end
             hold on
             if arg.pause
@@ -248,15 +256,26 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
                 text(cx+0.01,cy,sprintf('%u',elecNum))
             end
             
-            %                 if arg.showCardinal
-            %                     plot([0 0],ylim,'Color',[0.15 0.15 0.15],'linewidth',0.5)
-            %                     plot(xlim,[0 0],'Color',[0.5 0.5 0.5],'linewidth',0.5)
-            %                 end
+%             if arg.showCardinal
+%                 plot([0 0],ylim,'Color','w','linewidth',0.5)
+%                 plot(xlim,[0 0],'Color','w','linewidth',0.5)
+%             end
             
-            set(gca,'XAxisLocation','top','YTickLabel',-get(gca,'YTick'),'Box','Off')
+%             set(gca,'XAxisLocation','top','YTickLabel',-get(gca,'YTick'),'Box','Off')
+            
+            set(gca,'XAxisLocation','top');
             if ~arg.labels_off
-                xlabel(sprintf('Azimuth (%s)',degree),'FontSize',arg.FontSize)
-                ylabel(sprintf('Elevation (%s)',degree),'FontSize',arg.FontSize)
+                if arg.manuscript
+                    mxlabel(sprintf('Azimuth (%s)',degree))
+                    mylabel(sprintf('Elevation (%s)',degree))
+                else
+                    xlabel(sprintf('Azimuth (%s)',degree),'FontSize',arg.FontSize)
+                    ylabel(sprintf('Elevation (%s)',degree),'FontSize',arg.FontSize)
+                end
+            end
+           colormap hot
+            if arg.colorbar
+                colorbar
             end
             if nargout
                 varargout{1} = gca;
