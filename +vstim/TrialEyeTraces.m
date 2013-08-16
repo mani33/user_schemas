@@ -105,7 +105,7 @@ classdef TrialEyeTraces < dj.Relvar & dj.AutoPopulate
                         to = goodTimeEnd;
                     end
                 end
-                [x y t] = vstim.TrialEyeTraces.getEyeData(from,to,channelNames,Fs,filePointer);
+                [x, y, t] = vstim.TrialEyeTraces.getEyeData(from,to,channelNames,Fs,filePointer);
                 x = decimate(x,tuple.decimation_fac,'FIR');
                 y = decimate(y,tuple.decimation_fac,'FIR');
                 tuple.trace_h_deg = (ep(1) + ep(2)* x)/pix_per_deg;
@@ -156,7 +156,7 @@ classdef TrialEyeTraces < dj.Relvar & dj.AutoPopulate
                 
                 if args.markSaccade
                     if count(vstim.FirstSaccade(dd))==1
-                        [on off]  = fetchn(vstim.FirstSaccade(key),'sac_onset_rel_time','offset_rel_t');
+                        [on, off]  = fetchn(vstim.FirstSaccade(key),'sac_onset_rel_time','offset_rel_t');
                         plot([on on],ylim,'m');
                         plot([off off],ylim,'m');
                     end
@@ -205,7 +205,7 @@ classdef TrialEyeTraces < dj.Relvar & dj.AutoPopulate
         end
     end
     methods(Static)
-        function [x y t] = getEyeData(from,to,chanNames,Fs,filePointer)
+        function [x, y, t] = getEyeData(from,to,chanNames,Fs,filePointer)
             fileClass = class(filePointer);
             switch fileClass
                 case {'baseReader','baseReaderHammer','baseReaderBehOld'}
@@ -256,7 +256,7 @@ classdef TrialEyeTraces < dj.Relvar & dj.AutoPopulate
             end
             
             % Find out the indices of the requested channels:
-            [c reqChanInd] = intersect(allChanNames,requestedChanNames);
+            [c, reqChanInd] = intersect(allChanNames,requestedChanNames);
             if ischar(requestedChanNames)% when a single channel is requested
                 nc = 1;
             else
