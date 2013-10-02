@@ -118,7 +118,7 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             end
         end
         
-        function [ox oy] = getOutline(self,mahalDist)
+        function [ox, oy] = getOutline(self,mahalDist)
             %       function [ox oy] = getOutline(self,mahalDist)
             
             if nargin < 2
@@ -162,7 +162,7 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             
             arg.smooth = 5;
             arg.axes = [];
-            arg.mahalDist = 1;
+            arg.mahalDist = 1.5;
             arg.outlineOnly = true;
             arg.pause = false;
             arg.show_tit = true;
@@ -240,7 +240,7 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             
             if arg.show_tit
                 if arg.manuscript
-                    mtitle(args.titStr)
+                    mtitle(arg.titStr)
                 else
                     title(arg.titStr)
                 end

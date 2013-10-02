@@ -60,7 +60,7 @@ classdef PsthMov < dj.Relvar & dj.AutoPopulate
                     bad_tup = badKeys(ib);
                     bad_tup.reason = 'One or more swap times missed';
                     fprintf('Inserting bad trials (range of flipTime diff: %0.2f ms) into subtrialsIgnore table\n',brr(ib))
-                    insert(flevbl.SubTrialsIgnore,bad_tup);
+%                     insert(flevbl.SubTrialsIgnore,bad_tup);
                 end
                 trialSpikes = trialSpikes(good);
                 traj_rel_times = traj_rel_times(good);
@@ -92,13 +92,26 @@ classdef PsthMov < dj.Relvar & dj.AutoPopulate
             nTrajLocs = round((traj_t(end)-traj_t(1))/bw)+1;
             % Make finer space and time bins
             traj_ti = linspace(traj_t(1),traj_t(end),nTrajLocs);
-            traj_si = linspace(traj_s(1),traj_s(end),nTrajLocs);
+            % For motion reversals, we need handle things a bit differently
+            
+            if logical(fetch1(flevbl.StimCond(key),'is_reverse'))
+                assert(mod(length(traj_s),2)==1,' number of traj loc should be odd')
+                rp = (length(traj_s)+1)/2;
+                assert(mod(nTrajLocs,2)==1,'num of interpolated traj loc should be odd')
+                % Interpolate the two halfs of the trajectory of reversal separately
+                ni = (nTrajLocs+1)/2;
+                s1 = linspace(traj_s(1), traj_s(rp), ni);
+                s2 = linspace(traj_s(rp), traj_s(end), ni);
+                traj_si = [s1 s2(2:end)];
+            else
+                traj_si = linspace(traj_s(1),traj_s(end),nTrajLocs);
+            end
             bs = diff(traj_si(1:2));
             
             % Extend the 'traj' now to include pre_stim_time and post_stim_time
-            traj_ti_ext = [((-n_pre_stim_bins:-1)*bw)+traj_ti(1)    traj_ti   traj_ti(end)+(1:n_post_stim_bins)*bw]; 
+            traj_ti_ext = [((-n_pre_stim_bins:-1)*bw)+traj_ti(1)    traj_ti   traj_ti(end)+(1:n_post_stim_bins)*bw];
             % Catenate according to the direction of motion
-            traj_si_ext = [((-n_pre_stim_bins:-1)*bs)+traj_si(1)    traj_si   traj_si(end)+(1:n_post_stim_bins)*bs]; 
+            traj_si_ext = [((-n_pre_stim_bins:-1)*bs)+traj_si(1)    traj_si   traj_si(end)+(1:n_post_stim_bins)*bs];
             
             bin_cen = traj_ti_ext;
             bin_edges = [bin_cen bin_cen(end)+bw]-bw/2 ;
@@ -119,7 +132,7 @@ classdef PsthMov < dj.Relvar & dj.AutoPopulate
             bc = bc(1:end-1);
             tup.mean_fr  = bc(:)*(1000/bw)/nTrials;
             
-            self.insert(tup)
+%             self.insert(tup)
         end
     end
 end

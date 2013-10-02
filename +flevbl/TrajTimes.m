@@ -21,7 +21,7 @@ classdef TrajTimes < dj.Relvar & dj.AutoPopulate
 
 		function makeTuples(self, key)
             tuple = key;
-            [trial_num, bar_locs, on, off] = fetchn(flevbl.SubTrials(key),'trial_num','bar_locations','substim_on','substim_off');
+            [trial_num, bar_locs, on, off] = fetchn(flevbl.SubTrials(key)-flevbl.SubTrialsIgnore,'trial_num','bar_locations','substim_on','substim_off');
             cs = sprintf('trial_num = %u',trial_num);
             % Get swap times and pick the subset between substim on and substim off times
             tp = fetch1(stimulation.StimTrials(key,cs),'trial_params');

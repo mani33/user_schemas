@@ -48,6 +48,7 @@ end_time                    : double                        # no comments
 folder                      : varchar(250)                  # no comments
 date                        : date                          # datevalue
 num_flash_locs_barmap       : smallint unsigned             # number of bars for rf mapping
+flash_reverse=0             : tinyint                       # flash reversal condition
 %}
 
 classdef StimConstants < dj.Relvar

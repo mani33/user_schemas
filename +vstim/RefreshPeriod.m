@@ -37,7 +37,7 @@ classdef RefreshPeriod < dj.Relvar & dj.AutoPopulate
             else
                 monitorType = 'CRT';
             end
-            
+%              monitorType = 'LCD';
             if strcmp(monitorType,'CRT')
                 ft = ft(ft > 8 & ft < 12);
                 T = median(ft);

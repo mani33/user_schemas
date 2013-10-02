@@ -42,31 +42,36 @@ classdef FlashStats < dj.Relvar & dj.AutoPopulate
             assert(nFlashCond==nFlash,'Number of flashes wrong!')
            
             temp = struct;
-            % Make use of receptive field center estimation to restrict the flash
-            % locations for statistics
-            rfrv = rf.FitAvg(ephys.Spikes(key),'map_type_num = 3');
+%             % Make use of receptive field center estimation to restrict the flash
+%             % locations for statistics
+%             rfrv = rf.FitAvg(ephys.Spikes(key),'map_type_num = 3');
+%             rfve = rf.VarExp(ephys.Spikes(key),'map_type_num = 3');
+%             brfve = flevbl.BarRfVarExp(ephys.Spikes(key),'bar_gray_level = 255');
             sel_locs = 1:nFlash;
-            if count(rfrv)==1
-                rf_cen = fetch1(rfrv,'cen_x');
-                % Find flash location index close to the receptive field center
-                if fetch1(rf.SnrFitAvg(rfrv),'snr') > 3
-                    bar_locs = sort(unique(fetchn(flevbl.RelFlashCenX(key),'rel_to_mon_cen_deg')));
-                    [~,ind] = min(abs(bar_locs-rf_cen));
-                    if ind > 1 && ind < nFlash-1
-                    sel_locs = [-1 0 1] + ind; 
-                    end
-                end
-            else
-                % Try using bar rf fit
-                brfrv = flevbl.BarRfFit(key);
-                if count(brfrv)==1
-                    cen = round(get_center(brfrv));
-                    if cen > 1 && cen < nFlash-1
-                        sel_locs = [-1 0 1] + cen;
-                    end
-                end
-            end
+%             if count(rfve)==1
+%                 rf_cen = fetch1(rfrv,'cen_x');
+%                 % Find flash location index close to the receptive field center
+%                 if fetch1(rfve,'ve') > key.rf_fit_var_exp
+%                     bar_locs = sort(unique(fetchn(flevbl.RelFlashCenX(key),'rel_to_mon_cen_deg')));
+%                     [~,ind] = min(abs(bar_locs-rf_cen));
+%                     if ind > 1 && ind < nFlash-1
+%                     sel_locs = [-1 0 1] + ind; 
+%                     end
+%                 end
+%             elseif count(brfve)
+%                 % Try using bar rf fit
+%                 brfrv = flevbl.BarRfFit(key);
+%                 if fetch1(brfve,'ve') > key.rf_fit_var_exp
+%                     cen = round(get_center(brfrv));
+%                     if cen > 1 && cen < nFlash-1
+%                         sel_locs = [-1 0 1] + cen;
+%                     end
+%                 end
+%             else
+%                 disp('No good receptive field! Using all flash locs for statistics')
+%             end
             nFlash = length(sel_locs);
+            % Bonferroni correction
             alpha = 0.05/nFlash;
             for iFlash = 1:nFlash
                 loc_ind = sel_locs(iFlash);
@@ -75,7 +80,10 @@ classdef FlashStats < dj.Relvar & dj.AutoPopulate
                 trialSpikes = fetchn(flevbl.SubTrials(skeys) * flevbl.SubTrialSpikes(key,skeys),'spike_times');
                 temp.base{iFlash} = cellfun(@(x) length(find(x >= key.base_win_start & x < 0))*1000/abs(key.base_win_start), trialSpikes);
                 temp.resp{iFlash} = cellfun(@(x) length(find(x >= key.resp_win_start & x < key.resp_win_end))*1000/(key.resp_win_end - key.resp_win_start), trialSpikes);
+%                 temp.base{iFlash} = cellfun(@(x) length(find(x >= key.base_win_start & x < 0)), trialSpikes);
+%                 temp.resp{iFlash} = cellfun(@(x) length(find(x >= key.resp_win_start & x < key.resp_win_end)), trialSpikes);
                 [temp.p(iFlash),temp.H(iFlash)] = signrank(temp.resp{iFlash},temp.base{iFlash},'alpha',alpha);
+%                 [temp.H(iFlash),temp.p(iFlash)] = ttest(temp.resp{iFlash},temp.base{iFlash},'alpha',alpha);
             end
             tup.base_fr = mean(cellfun(@mean, temp.base));
             tup.resp_fr = mean(cellfun(@mean, temp.resp));

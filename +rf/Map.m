@@ -80,7 +80,11 @@ classdef Map < dj.Relvar
                     firstSwap = find(ctd.swap_times == ctd.stim_on);
                     lastSwap = find(ctd.swap_times <= ctd.stim_off,1,'last');
                     times{iTrial} = reshape(ctd.swap_times(firstSwap:lastSwap),1,[]);
-                    nSwaps = lastSwap-firstSwap+1;
+                    if stimFrames > 1
+                        nSwaps = lastSwap-firstSwap+1;
+                    else
+                        nSwaps = lastSwap-firstSwap;
+                    end
                     nSwaps = floor(nSwaps/stimFrames);
                     td(iTrial).dot_locations = td(iTrial).dot_locations(1:nSwaps);
                     td(iTrial).dot_colors = td(iTrial).dot_colors(1:nSwaps);

@@ -28,43 +28,53 @@ classdef TrialEyeTraces < dj.Relvar & dj.AutoPopulate
     methods(Access=protected)
         
         function makeTuples(self, key)
-            % !!! compute missing fields for key here
-            folder = fetch1(acq.Stimulation(key),'stim_path');
-            % WARNING: the code was not tested to see if it handles the tdms data type
-            % correctly since I was unable to read any tdms data due to compatibility
-            % issues.
             
-            % tdms or hdf5?
-            hdfFile = fullfile(getLocalPath(folder),'waveforms0');
-            tdmsFile = fullfile(getLocalPath(folder),'waveforms.tdms');
-            
-            
-            if exist(hdfFile,'file')
-                fileType = 'hdf5';
-            elseif exist(tdmsFile,'file')
-                fileType = 'tdms';
-            else
-                error('Analog data file does not exist or of unknown file type')
-            end
-            
+            % Old hammer based acquisition - eye trace analog data should be at the Y
+            % drive or stor01
+            hammer = logical(fetch1(acq.Sessions(key),'hammer'));
             channelNames = {'Eye Horizontal', 'Eye Vertical'};
             
-            switch fileType
-                case 'hdf5'
-                    baseReaderFile = fullfile(getLocalPath(folder),'waveforms%u');
-                    filePointer = baseReaderBehOld(baseReaderFile,channelNames);
-                    Fs = getSamplingRate(filePointer);
-                    Fs_new = round(Fs/key.decimation_fac);
-                    nbSamples = getNbSamples(filePointer);
-                case 'tdms'
-                    filePointer = loadTdmsData(tdmsFile);
-                    nbSamples = inf;
-                    Fs = 2000;
-                    Fs_new = round(Fs/key.decimation_fac);
-                otherwise
-                    error('unknown file type')
+            if hammer
+                folder = fetch1(acq.Stimulation(key),'stim_path');
+                % WARNING: the code was not tested to see if it handles the tdms data type
+                % correctly since I was unable to read any tdms data due to compatibility
+                % issues.
+                
+                % tdms or hdf5?
+                hdfFile = fullfile(getLocalPath(folder),'waveforms0');
+                tdmsFile = fullfile(getLocalPath(folder),'waveforms.tdms');
+                
+                if exist(hdfFile,'file')
+                    fileType = 'hdf5';
+                elseif exist(tdmsFile,'file')
+                    fileType = 'tdms';
+                else
+                    error('Analog data file does not exist or of unknown file type')
+                end
+                
+                switch fileType
+                    case 'hdf5'
+                        baseReaderFile = fullfile(getLocalPath(folder),'waveforms%u');
+                        filePointer = baseReaderBehOld(baseReaderFile,channelNames);
+                        Fs = getSamplingRate(filePointer);
+                        Fs_new = round(Fs/key.decimation_fac);
+                        nbSamples = getNbSamples(filePointer);
+                    case 'tdms'
+                        filePointer = loadTdmsData(tdmsFile);
+                        nbSamples = inf;
+                        Fs = 2000;
+                        Fs_new = round(Fs/key.decimation_fac);
+                    otherwise
+                        error('unknown file type')
+                end
+            else
+                behPath = fetch1(acq.BehaviorTraces(key),'beh_path');
+                baseReaderFile = findFile(RawPathMap,behPath);
+                filePointer = baseReaderElectrophysiology(baseReaderFile,channelNames);
+                Fs = getSamplingRate(filePointer);
+                Fs_new = round(Fs/key.decimation_fac);
+                nbSamples = getNbSamples(filePointer);
             end
-            
             goodTimeEnd = 1000 *(nbSamples)/Fs - 1; % in msec
             onData = fetch(stimulation.StimTrialEvents(key,'event_type = "showStimulus"') & ...
                 stimulation.StimTrials('valid_trial = 1'),'event_time');

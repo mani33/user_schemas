@@ -20,6 +20,7 @@ traj_offset=null            : smallint                      # trajectory offset
 direction                   : tinyint                       # direction of motion
 dx=null                     : smallint unsigned             # change in pixels per frame
 arrangement=null            : tinyint                       # blah
+is_reverse                  : tinyint                       # is it flash reversed condition
 %}
 
 classdef StimCond < dj.Relvar
@@ -48,6 +49,7 @@ classdef StimCond < dj.Relvar
                 end
                 tuple = util.addFieldIfExists(tuple,cc(iCond).condition_info,'isStop','is_stop');
                 tuple = util.addFieldIfExists(tuple,cc(iCond).condition_info,'isInit','is_init');
+                tuple = util.addFieldIfExists(tuple,cc(iCond).condition_info,'isReverse','is_reverse');
                 
                 tuple.flash_location = cc(iCond).condition_info.flashLocation;
                 tuple.bar_color_r = cc(iCond).condition_info.barColor(1);

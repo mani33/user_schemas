@@ -1,6 +1,7 @@
 %{
 rf.SnrFitAvg (computed) # my newest table
 -> rf.FitAvg
+-> rf.SnrParams
 -----
 snr: double # signal to noise ratio
 %}
@@ -9,7 +10,7 @@ classdef SnrFitAvg < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
         table = dj.Table('rf.SnrFitAvg')
-        popRel = rf.FitAvg  % !!! update the populate relation
+        popRel = rf.FitAvg * rf.SnrParams  % !!! update the populate relation
     end
     
     methods
@@ -19,7 +20,7 @@ classdef SnrFitAvg < dj.Relvar & dj.AutoPopulate
     end
     methods(Access=protected)
         function makeTuples(self, key)
-            nMahDistForSNR = 1;
+            nMahDistForSNR = key.mahal_dist;
             fd = fetch1(rf.FitAvg(key),'fit_params');
             cx = fd(1);
             cy = fd(2);
@@ -38,8 +39,15 @@ classdef SnrFitAvg < dj.Relvar & dj.AutoPopulate
             md = reshape(md,n,m);
             
             map = fetch1(rf.MapAvg(key),'map');
-            absSig = abs(mean(map(md <= nMahDistForSNR)));
-            noise = std(map(md > nMahDistForSNR));
+            % apply smoothing
+            n = 5;
+            w = window(@gausswin,n);
+            w = w * w';
+            w = w / sum(w(:));
+            smap = imfilter(map,w,'circular');
+            
+            absSig = abs(mean(smap(md <= nMahDistForSNR)));
+            noise = std(smap(md > nMahDistForSNR));
             
             snr = absSig/noise;
             if isnan(snr)

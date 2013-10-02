@@ -20,7 +20,7 @@ classdef Traj < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
         table = dj.Table('flevbl.Traj')
-        popRel = flevbl.TrialGroup & flevbl.StimConstants('flash_init = 0 and flash_stop = 0 and monitor_type = "CRT"') & vstim.PixPerDeg  % !!! update the populate relation
+        popRel = flevbl.TrialGroup & flevbl.StimConstants('flash_init = 0 and flash_stop = 0') & vstim.PixPerDeg  % !!! update the populate relation
     end
     
     methods

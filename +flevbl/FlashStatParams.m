@@ -3,7 +3,7 @@ flevbl.FlashStatParams (lookup) # params for flash response statistics
 
 base_win_start = -150: double # starting time for baseline window
 resp_win_start = 40: double # response window starting
-resp_win_end = 100: double # blah
+resp_win_end = 120: double # blah
 -----
 
 
