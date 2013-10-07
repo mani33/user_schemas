@@ -39,13 +39,13 @@ classdef PixPerDeg < dj.Relvar & dj.AutoPopulate
                 const.monitorType = 'CRT';
             end
             if strcmp(const.monitorType,'CRT')
-                if isfield(const,'monitorSize')
-                    if abs(41-const.monitorSize(1)) < 2
-                        const.monitorSize(1) = 41;
-                    end
-                else
+%                 if isfield(const,'monitorSize')
+%                     if abs(41-const.monitorSize(1)) < 2
+%                         const.monitorSize(1) = 41;
+%                     end
+%                 else
                     const.monitorSize = [41 30];
-                end
+%                 end
                 if ~isfield(const,'monitorDistance') && key.subject_id == 8
                     const.monitorDistance = 107;
                     disp('Monitor distance of 107 cm was assumed for Hulk')

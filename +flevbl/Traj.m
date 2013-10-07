@@ -1,19 +1,20 @@
 %{
 flevbl.Traj (computed) # trajectory info - space and time
--> flevbl.TrialGroup
-flash_in_rf : boolean # was flash presented at receptive field
-mov_in_rf : boolean # was moving bar presented at receptive field
-flash_shown : boolean # was flash shown
-mov_shown : boolean # was moving bar shown
-dx : tinyint unsigned # pixels per frame
-direction: boolean # direction of motion 0 - LR, 1 - RL
-bar_color_r: tinyint unsigned # bar color red channel
 
------
-sx : blob # locations_x of motion frames
-sy : blob # locations_y of motion frames
-t : blob # relative times of motion frames
-traj_ts = CURRENT_TIMESTAMP: timestamp           # automatic timestamp. Do not edit
+-> flevbl.TrialGroup
+flash_in_rf     : tinyint               # was flash presented at receptive field
+mov_in_rf       : tinyint               # was moving bar presented at receptive field
+flash_shown     : tinyint               # was flash shown
+mov_shown       : tinyint               # was moving bar shown
+dx              : tinyint unsigned      # pixels per frame
+direction       : tinyint               # direction of motion 0 - LR, 1 - RL
+bar_color_r     : tinyint unsigned      # bar color red channel
+---
+sx                          : blob                          # locations_x of motion frames
+sy                          : blob                          # locations_y of motion frames
+t                           : blob                          # relative times of motion frames
+traj_ts=CURRENT_TIMESTAMP   : timestamp                     # automatic timestamp. Do not edit
+cond_idx                    : smallint unsigned             # condition index
 %}
 
 classdef Traj < dj.Relvar & dj.AutoPopulate

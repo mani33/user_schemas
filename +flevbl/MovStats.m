@@ -26,7 +26,7 @@ classdef MovStats < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
         table = dj.Table('flevbl.MovStats')
-        popRel = (flevbl.BarGrayLevels*flevbl.SpikeSets*flevbl.MovStatParams*flevbl.DxVals) & flevbl.Traj
+        popRel = (flevbl.BarGrayLevels*flevbl.SpikeSets*flevbl.MovStatParams*flevbl.DxVals) & (flevbl.Traj | flevbl.TrajControls)
     end
     
     methods
@@ -41,8 +41,20 @@ classdef MovStats < dj.Relvar & dj.AutoPopulate
             d = [0 1];
             for iDir = 1:nDir
                 dir = d(iDir);
-                tr = fetch(flevbl.Traj(key,sprintf('direction = %u and bar_color_r = %u and mov_in_rf = 1 and flash_shown = 0 and mov_shown = 1',...
-                    dir,key.bar_gray_level)),'*');
+                % In control sessions, we only use the continuous motion condtion to do
+                % statistics ( we don't use the flash-initiated, terminated and reversed
+                % conditions)
+                if logical(fetch1(flevbl.StimConstants(key),'flash_reverse')) || logical(fetch1(flevbl.StimConstants(key),'flash_init'))
+                    cond_idx = fetchn(flevbl.StimCond(key,'is_reverse = 0 and is_init = 0 and is_stop = 0') & ...
+                        flevbl.StimCenProxCond(sprintf('direction = %u and bar_color_r = %u and mov_in_rf = 1 and flash_shown = 0 and mov_shown = 1',...
+                        dir,key.bar_gray_level)),'cond_idx');
+                    tr = fetch(flevbl.TrajControls(key,sprintf('cond_idx = %u',cond_idx)),'*');
+                else
+                    cond_idx = fetch1(flevbl.StimCenProxCond(key,sprintf('direction = %u and bar_color_r = %u and mov_in_rf = 1 and flash_shown = 0 and mov_shown = 1',...
+                        dir,key.bar_gray_level)),'cond_idx');
+                    tr = fetch(flevbl.Traj(key,sprintf('direction = %u and bar_color_r = %u and mov_in_rf = 1 and flash_shown = 0 and mov_shown = 1',...
+                        dir,key.bar_gray_level)),'*');
+                end
                 rfc = fetch1(rf.FitAvg(ephys.Spikes(key),'map_type_num = 3'),'cen_x');
                 if ~isnan(rfc)
                     % Find time at which the trajectory crosses the receptive field
@@ -62,12 +74,12 @@ classdef MovStats < dj.Relvar & dj.AutoPopulate
 %                     assert(overlap==1,'base and resp windows overlap')
                     
                     % Get stimulus in the receptive field arrangement
-                    qs = sprintf('direction = %u and bar_color_r = %u and flash_in_rf=0 and flash_shown=0 and mov_shown=1',...
-                        dir,key.bar_gray_level);
+%                     qs = sprintf('direction = %u and bar_color_r = %u and flash_in_rf=0 and flash_shown=0 and mov_shown=1',...
+%                         dir,key.bar_gray_level);
                     
-                    rf_in_cond = fetch1(flevbl.StimCenProxCond(key,qs),'cond_idx');
-                    cs = sprintf('cond_idx=%u',rf_in_cond);
-                    
+%                     rf_in_cond = fetch1(flevbl.StimCenProxCond(key,qs),'cond_idx');
+%                     cs = sprintf('cond_idx=%u',rf_in_cond);
+                    cs = sprintf('cond_idx = %u',cond_idx);
                     
                     % Get spike times
                     trialSpikes = fetchn(flevbl.SubTrialSpikes(key) & flevbl.SubTrials(key,cs)-flevbl.SubTrialsIgnore,'spike_times');
@@ -76,14 +88,17 @@ classdef MovStats < dj.Relvar & dj.AutoPopulate
                     bsc = cellfun(@(x) length(find(x >= bwin(1) & x < bwin(2))), trialSpikes);
                     rsc = cellfun(@(x) length(find(x >= rwin(1) & x < rwin(2))), trialSpikes);
                     
-                    key.(sprintf('base_fr_%u',dir)) = mean(bsc)*1000/key.base_win;
-                    key.(sprintf('resp_fr_%u',dir)) = mean(rsc)*1000/key.resp_win;
+                    baseFr = mean(bsc)*1000/key.base_win;
+                    respFr = mean(rsc)*1000/key.resp_win;
+                    
+                    key.(sprintf('base_fr_%u',dir)) = baseFr;
+                    key.(sprintf('resp_fr_%u',dir)) = respFr;
                     
                     [h,p] = ttest(bsc,rsc);
                     if ~isnan(h) && h
                         key.(sprintf('responsive_%u',dir)) = true;
                         key.(sprintf('p_%u',dir)) = p;
-                        if rsc > bsc
+                        if respFr > baseFr
                             key.(sprintf('excit_%u',dir)) = true;
                         else
                             key.(sprintf('inhib_%u',dir)) = true;

@@ -47,10 +47,10 @@ classdef StimConstants < dj.Relvar
             key.fix_spot_location = c.fixSpotLocation;
             key.fix_spot_size = c.fixSpotSize;
             key.passive = c.passive;
-            if isfield(c,'monitorSize')
-                key.monitor_size_x = c.monitorSize(1);
-                key.monitor_size_y = c.monitorSize(2);
-            end
+%             if isfield(c,'monitorSize')
+%                 key.monitor_size_x = c.monitorSize(1);
+%                 key.monitor_size_y = c.monitorSize(2);
+%             end
             key.monitor_distance = c.monitorDistance;
             
             

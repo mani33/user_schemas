@@ -60,7 +60,7 @@ classdef PsthMov < dj.Relvar & dj.AutoPopulate
                     bad_tup = badKeys(ib);
                     bad_tup.reason = 'One or more swap times missed';
                     fprintf('Inserting bad trials (range of flipTime diff: %0.2f ms) into subtrialsIgnore table\n',brr(ib))
-%                     insert(flevbl.SubTrialsIgnore,bad_tup);
+                    insert(flevbl.SubTrialsIgnore,bad_tup);
                 end
                 trialSpikes = trialSpikes(good);
                 traj_rel_times = traj_rel_times(good);
@@ -132,7 +132,7 @@ classdef PsthMov < dj.Relvar & dj.AutoPopulate
             bc = bc(1:end-1);
             tup.mean_fr  = bc(:)*(1000/bw)/nTrials;
             
-%             self.insert(tup)
+            self.insert(tup)
         end
     end
 end
