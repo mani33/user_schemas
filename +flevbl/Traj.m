@@ -14,7 +14,6 @@ sx                          : blob                          # locations_x of mot
 sy                          : blob                          # locations_y of motion frames
 t                           : blob                          # relative times of motion frames
 traj_ts=CURRENT_TIMESTAMP   : timestamp                     # automatic timestamp. Do not edit
-cond_idx                    : smallint unsigned             # condition index
 %}
 
 classdef Traj < dj.Relvar & dj.AutoPopulate

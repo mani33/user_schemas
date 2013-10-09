@@ -11,6 +11,7 @@ combined = 0: boolean # flash and motion presented together
 init = 0: boolean # flash-initiated condition?
 stop = 0: boolean # flash-stopped condition?
 reverse = 0: boolean # flash-reversed condition?
+lcd=0                       : boolean                       # monitor type lcd or crt
 subj_initials : varchar(4) # abbreviation for subjects
 
 %}
