@@ -6,7 +6,10 @@ fle.StimConstants (computed) # my newest table
 
 -> fle.TrialGroup
 ---
-bg_color                    : tinyblob                      # no comments
+monitor_type                : varchar(250)                  # LCD or CRT monitor
+bg_color_r                  : tinyint unsigned              # red component
+bg_color_g                  : tinyint unsigned              # green component
+bg_color_b                  : tinyint unsigned              # blue component
 fix_spot_color              : tinyblob                      # no comments
 fix_spot_location           : tinyblob                      # no comments
 fix_spot_size               : tinyblob                      # no comments
@@ -30,7 +33,7 @@ max_stimulus_time=null      : smallint unsigned             # blah
 inter_stimulus_time=null    : smallint unsigned             # ist
 post_stimulus_time=null     : smallint unsigned             # blah
 flash_stop                  : tinyint                       # no comments
-flash_init=null             : tinyint                       # no comments
+flash_init                  : tinyint                       # was it flash initiated condition
 combined=0                  : tinyint                       # flash and moving bar together
 arrangement=null            : tinyblob                      # blah
 reward_prob                 : double                        # no comments
@@ -44,6 +47,8 @@ start_time                  : double                        # no comments
 end_time                    : double                        # no comments
 folder                      : varchar(250)                  # no comments
 date                        : date                          # datevalue
+num_flash_locs_barmap       : smallint unsigned             # number of bars for rf mapping
+flash_reverse=0             : tinyint                       # flash reversal condition
 %}
 
 classdef StimConstants < dj.Relvar
@@ -60,7 +65,14 @@ classdef StimConstants < dj.Relvar
         function makeTuples(self, key)
             %!!! compute missing fields for key here
             c = fetch1(stimulation.StimTrialGroup(key),'stim_constants');
-            key.bg_color = c.bgColor;
+            if isfield(c,'monitorType')
+                key.monitor_type = c.monitorType;
+            else
+                key.monitor_type = 'CRT';
+            end
+            key.bg_color_r = c.bgColor(1);
+            key.bg_color_g = c.bgColor(2);
+            key.bg_color_b = c.bgColor(3);
             key.fix_spot_color = c.fixSpotColor;
             key.fix_spot_location = c.fixSpotLocation;
             key.fix_spot_size = c.fixSpotSize;
@@ -78,16 +90,49 @@ classdef StimConstants < dj.Relvar
             key.trajectory_length = c.trajectoryLength;
             key.trajectory_angle = c.trajectoryAngle;
             key.num_flash_locs = c.numFlashLocs;
+            if isfield(c,'numFlashLocsBarMap')
+                key.num_flash_locs_barmap = c.numFlashLocsBarMap;
+            else
+                key.num_flash_locs_barmap = c.numFlashLocs;
+            end
             key = util.addFieldIfExists(key,c,'flashLocDistance','flash_loc_distance');
             key = util.addFieldIfExists(key,c,'verticalDistance','vertical_distance');
             key.direction = c.direction;
             key = util.addFieldIfExists(key,c,'maxStimulusTime','max_stimulus_time');
             key = util.addFieldIfExists(key,c,'interStimulusTime','inter_stimulus_time');
             key = util.addFieldIfExists(key,c,'postStimulusTime','post_stimulus_time');
-            key.flash_stop = c.flashStop;
+            
+            
             if isfield(c,'flashInit')
-                key.flash_init = c.flashInit;
+                if isnan(c.flashInit)
+                    key.flash_init = 0;
+                else
+                    key.flash_init = c.flashInit;
+                end
+            else
+                key.flash_init = 0;
             end
+            
+            if isfield(c,'flashStop')
+                if isnan(c.flashStop)
+                    key.flash_stop = 0;
+                else
+                    key.flash_stop = c.flashStop;
+                end
+            else
+                key.flash_stop = 0;
+            end
+            
+            if isfield(c,'flashReverse')
+                if isnan(c.flashReverse)
+                    key.flash_reverse = 0;
+                else
+                    key.flash_reverse = c.flashReverse;
+                end
+            else
+                key.flash_reverse = 0;
+            end
+            
             key = util.addFieldIfExists(key,c,'combined');
             key = util.addFieldIfExists(key,c,'arrangement');
             key.reward_prob = c.rewardProb;
@@ -103,6 +148,34 @@ classdef StimConstants < dj.Relvar
             key.end_time = c.endTime;
             key.folder = c.folder;
             self.insert(key)
+        end
+        function barRects = get_flash_rect_deg(self,flash_loc_ind,varargin)
+            % bp = get_flash_position_deg(key,flash_loc_ind)
+            args.bar_gray_level = 255;
+            args = parse_var_args(args,varargin{:});
+            keys = fetch(self);
+            nKeys = length(keys);
+            barRects = cell(1,nKeys);
+            for iKey = 1:nKeys
+                key = keys(iKey);
+                qs = sprintf('bar_color_r = %u and flash_in_rf=1 and flash_shown=1 and mov_shown=0',...
+                    args.bar_gray_level);
+                cqs = sprintf('flash_location = %u',flash_loc_ind);
+                ppd = fetch1(vstim.PixPerDeg(key),'pix_per_deg');
+                flash_cond_idx = fetch1(fle.StimCond(key,cqs,fetch(fle.StimCenProxCond(key,qs))),'cond_idx');
+                flash_cen = fetch1(fle.SubTrials(key,sprintf('cond_idx = %u',flash_cond_idx)),'flash_centers',1);
+                flash_cen = (flash_cen{:} - [fetch1(fle.StimConstants(key),'monitor_center_x');fetch1(fle.StimConstants(key),'monitor_center_y')])/ppd;
+                [bw, bh] = fetchn(fle.StimConstants(key),'bar_size_x','bar_size_y');
+                bw = bw/ppd;
+                bh = bh/ppd;
+                bp(1) = flash_cen(1) - bw/2;
+                bp(2) = -(flash_cen(2) + bh/2);
+                bp(3:4) = [bw bh];
+                barRects{iKey} = bp;
+            end
+            if nKeys==1
+                barRects = [barRects{:}];
+            end
         end
     end
 end

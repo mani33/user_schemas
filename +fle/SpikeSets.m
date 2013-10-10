@@ -30,7 +30,7 @@ classdef SpikeSets < dj.Relvar & dj.AutoPopulate
         end
     end
     methods
-        function [mfr_dir0 mfr_dir1] = getDirSelResp(self,dx,resp_win_start,resp_win_end)
+        function [mfr_dir0, mfr_dir1] = getDirSelResp(self,dx,resp_win_start,resp_win_end)
             % function dsi = getDirSelInd(self,dx,resp_win_start,resp_win_end)
             
             key = fetch(self);
@@ -125,42 +125,54 @@ classdef SpikeSets < dj.Relvar & dj.AutoPopulate
             mfr_dir1 = meanFr(2);
         end
         
-        function plotRasters(self,varargin)
+        function plot(self,varargin)
             
             % rfCond = 0(stim outside rf) or = 1 or = -1(stim inside or outside rf)
             % combinedStim = 1(moving and flashed bars present in subtrial); = 0(single stim only)
             %
-            arg.barTypes = {'flash','moving'}; % {'flash','moving'} or 'flash' or 'moving'
-            arg.rfCond = true; % stim in the receptive field or not
-            arg.combinedStim = false; % plot combined stim?
-            arg.plotsPerPage = 20;
-            arg.pause = true;
-            arg = parseVarArgs(arg,varargin{:});
-            argList = struct2argList(arg);
+            args.barTypes = {'flash','moving'}; % {'flash','moving'} or 'flash' or 'moving'
+            args.rfCond = true; % stim in the receptive field or not
+            args.combinedStim = false; % plot combined stim?
+            args.plotsPerPage = [];
+            args.pause = true;
+            args.plot_type = 'raster'; % can be 'raster','sdf','hist' or 'raster-sdf'
+            args.axis_col = [1 1 1];
+            args.is_init = false;
+            args.is_stop = false;
+            args.Position = [];
+            args.rasterLineWidth = 0.5;
+            args.bar_gray_level = 255;
+            args = parse_var_args(args,varargin{:});
+            argsList = struct2argList(args);
             
             key = fetch(self);
-            misAlignTol = 10;
             
-            cond = fetch(fle.StimCond(key),'*');
-            [condIdx condStr] = getSelCond(fle.TrialGroup(key),argList{:});
+            [condIdx, condStr] = getSelCond(fle.TrialGroup(key),argsList{:});
             nCond = length(condIdx);
             cc = 0;
-            
+            if ~isempty(args.plotsPerPage)
+                np = ceil(sqrt(args.plotsPerPage));
+            else
+                np = ceil(sqrt(nCond));
+                args.plotsPerPage = np*(np+1);
+            end
             for iCond = 1:nCond
                 cc = cc + 1;
                 currCondIdx = condIdx(iCond);
-                if cc==1 || cc > arg.plotsPerPage
-                    figure;
-                    set(gcf,'Position',[102,101,1124,575])
+                if cc==1 || cc > args.plotsPerPage
+                    figure
+                    if ~isempty(args.Position)
+                        set(gcf,'Position',[249,-124,1361,627])
+                    end
                 end
-                if cc > arg.plotsPerPage
+                if cc > args.plotsPerPage
                     cc = 1;
                 end
                 
-                ax = subplot(4,5,cc);
+                ax = subplot(np,np+1,cc);
                 cs = sprintf('cond_idx=%u',currCondIdx);
                 stsRv = fle.SubTrialSpikes(key) & fle.SubTrials(cs);
-                plotSpikes(stsRv,'axes',ax,'titStr',condStr{iCond});
+                plot(stsRv,'axes',ax,'titStr',condStr{iCond},argsList{:});
                 
                 %                 if cond(currCondIdx).is_moving
                 %                     rfLocInd = getCenter(fle.FlashRf(key));

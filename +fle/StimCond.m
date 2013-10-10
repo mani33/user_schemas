@@ -9,14 +9,18 @@ cond_idx        : smallint unsigned     # condition index for stimulus
 ---
 is_flash                    : tinyint                       # if flash trial
 is_moving                   : tinyint                       # if moving trial
-is_stop=null                : tinyint                       # is stop condition
-is_init=null                : tinyint                       # if flash init condition is used
+is_stop=0                   : tinyint                       # is flash stop condition
+is_init=0                   : tinyint                       # is flash init condition
 flash_location=null         : smallint unsigned             # flash location index
-bar_color                   : tinyblob                      # bar color
+bar_color_r                 : tinyint unsigned              # bar color_R
+bar_color_g                 : tinyint unsigned              # bar color_G
+bar_color_b                 : tinyint unsigned              # bar color_B
 trajectory_angle            : smallint                      # traj angle
-direction=null              : tinyint                       # right or left direction
+traj_offset=null            : smallint                      # trajectory offset
+direction                   : tinyint                       # direction of motion
 dx=null                     : smallint unsigned             # change in pixels per frame
 arrangement=null            : tinyint                       # blah
+is_reverse                  : tinyint                       # is it flash reversed condition
 %}
 
 classdef StimCond < dj.Relvar
@@ -45,12 +49,23 @@ classdef StimCond < dj.Relvar
                 end
                 tuple = util.addFieldIfExists(tuple,cc(iCond).condition_info,'isStop','is_stop');
                 tuple = util.addFieldIfExists(tuple,cc(iCond).condition_info,'isInit','is_init');
+                tuple = util.addFieldIfExists(tuple,cc(iCond).condition_info,'isReverse','is_reverse');
                 
                 tuple.flash_location = cc(iCond).condition_info.flashLocation;
-                tuple.bar_color = cc(iCond).condition_info.barColor;
+                tuple.bar_color_r = cc(iCond).condition_info.barColor(1);
+                tuple.bar_color_g = cc(iCond).condition_info.barColor(2);
+                tuple.bar_color_b = cc(iCond).condition_info.barColor(3);
                 tuple.trajectory_angle = cc(iCond).condition_info.trajectoryAngle;
                 
-                tuple = util.addFieldIfNotNan(tuple,'direction',cc(iCond).condition_info.direction);
+                tuple = util.addFieldIfExists(tuple,cc(iCond).condition_info,'trajOffset','traj_offset');
+                % For flash only condition, set the direction to -1 instead of NaN
+                curr_dir = cc(iCond).condition_info.direction;
+                if logical(tuple.is_flash) && ~logical(tuple.is_moving)
+                    if isnan(curr_dir)
+                        curr_dir = -1;
+                    end
+                end
+                tuple = util.addFieldIfNotNan(tuple,'direction',curr_dir);
                 tuple = util.addFieldIfNotNan(tuple,'dx',cc(iCond).condition_info.dx);
                 tuple = util.addFieldIfExists(tuple,cc(iCond).condition_info,'arrangement');
                

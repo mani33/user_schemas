@@ -9,6 +9,11 @@ mov_in_rf = 0: tinyint # was mov in rf
 flash_shown = 0: tinyint # blah
 mov_shown = 0: tinyint # blah
 direction = -1: tinyint # movement direction
+bar_color_r : tinyint unsigned # red
+bar_color_g : tinyint unsigned # green
+bar_color_b : tinyint unsigned # blue
+is_init=0   : boolean # is flash initiated condtion
+is_stop=0   : boolean # is flash terminated condtion
 dx = Null : smallint unsigned # change in pixels per frame
 %}
 
@@ -16,8 +21,6 @@ classdef StimCenProxCond < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
         table = dj.Table('fle.StimCenProxCond')
-    end
-    properties
         popRel = fle.TrialGroup;  % !!! update the populate relation
     end
     
@@ -25,12 +28,12 @@ classdef StimCenProxCond < dj.Relvar & dj.AutoPopulate
         function self = StimCenProxCond(varargin)
             self.restrict(varargin)
         end
-        
+    end
+    methods(Access = protected)
         function makeTuples(self, key)
             
             % For a flash or moving bar condition, find the arrangement where the given stimulus was
             % close to the stim center
-            
             
             cond = fetch(fle.StimCond(key),'*');
             nCond = length(cond);
@@ -38,7 +41,6 @@ classdef StimCenProxCond < dj.Relvar & dj.AutoPopulate
             
             % Is it single or combined?
             cp = fetch(fle.StimConstants(key),'combined');
-            tuples = repmat(key,1,nCond);
             
             if ~cp.combined
                 flash_in_rf = [cond.is_flash]==1;
@@ -46,19 +48,27 @@ classdef StimCenProxCond < dj.Relvar & dj.AutoPopulate
                 flash_shown = flash_in_rf;
                 mov_shown = mov_in_rf;
                 for iCond = 1:nCond
-                    tuples(iCond).cond_idx = cond(iCond).cond_idx;
-                    tuples(iCond).flash_in_rf = flash_in_rf(iCond);
-                    tuples(iCond).mov_in_rf = mov_in_rf(iCond);
-                    tuples(iCond).flash_shown = flash_shown(iCond);
-                    tuples(iCond).mov_shown = mov_shown(iCond);
-                    tuples(iCond).arr_rf_in = cond(iCond).arrangement;
-                    tuples(iCond).direction = cond(iCond).direction;
-                    tuples(iCond).dx = cond(iCond).dx;
+                    tuple = key;
+                    tuple.cond_idx = cond(iCond).cond_idx;
+                    tuple.flash_in_rf = flash_in_rf(iCond);
+                    tuple.mov_in_rf = mov_in_rf(iCond);
+                    tuple.flash_shown = flash_shown(iCond);
+                    tuple.mov_shown = mov_shown(iCond);
+                    tuple.arr_rf_in = cond(iCond).arrangement;
+                    tuple.direction = cond(iCond).direction;
+                    tuple.dx = cond(iCond).dx;
+                    tuple.bar_color_r = cond(iCond).bar_color_r;
+                    tuple.bar_color_g = cond(iCond).bar_color_g;
+                    tuple.bar_color_b = cond(iCond).bar_color_b;
+                    tuple.is_init = cond(iCond).is_init;
+                    tuple.is_stop = cond(iCond).is_stop;
+                    %!!! compute missing fields for key here
+                    self.insert(tuple)
                 end
             else
-                
                 stimCenY = fetch1(fle.StimConstants(key),'stim_center_y');
                 for iCond = 1:nCond
+                    tuple = key;
                     % Find the arrangement for the given condition and find the other
                     % arrangement and compare both
                     
@@ -80,20 +90,20 @@ classdef StimCenProxCond < dj.Relvar & dj.AutoPopulate
                         bd = fetch(fle.SubTrials(key,sprintf('cond_idx=%u',ct.cond_idx)),param,1);
                         xy = bd.(param){:};
                         y = xy(2,1);
-                                               
+                        
                         % Check if the current stim condition was closer to the stim center
                         if abs(y - stimCenY) < OFFSET_LIM
-                            tuples(iCond).arr_rf_in = ct.arrangement;
-                            tuples(iCond).([barType '_in_rf']) = 1;
+                            tuple.arr_rf_in = ct.arrangement;
+                            tuple.([barType '_in_rf']) = 1;
                         end
                         
-                        tuples(iCond).([barType '_shown']) = 1;
+                        tuple.([barType '_shown']) = 1;
                         
                     elseif ct.is_flash && ct.is_moving
                         
-                        tuples(iCond).flash_shown = 1;
-                        tuples(iCond).mov_shown = 1;
-                        tuples(iCond).arr_rf_in = ct.arrangement;
+                        tuple.flash_shown = 1;
+                        tuple.mov_shown = 1;
+                        tuple.arr_rf_in = ct.arrangement;
                         
                         bd = fetch(fle.SubTrials(key,sprintf('cond_idx=%u',ct.cond_idx)),'flash_centers',1);
                         xy = bd.flash_centers{:};
@@ -103,18 +113,23 @@ classdef StimCenProxCond < dj.Relvar & dj.AutoPopulate
                         mov_y = xy(2,1);
                         [~,closer] = min(abs([flash_y mov_y]-stimCenY));
                         if closer==1
-                            tuples(iCond).flash_in_rf = 1;
+                            tuple.flash_in_rf = 1;
                         elseif closer==2
-                            tuples(iCond).mov_in_rf = 1;
+                            tuple.mov_in_rf = 1;
                         end
                     end
-                    tuples(iCond).cond_idx = ct.cond_idx;
-                    tuples(iCond).direction = ct.direction;
-                    tuples(iCond).dx = ct.dx;
+                    tuple.cond_idx = ct.cond_idx;
+                    tuple.direction = ct.direction;
+                    tuple.dx = ct.dx;
+                    tuple.bar_color_r = cond(iCond).bar_color_r;
+                    tuple.bar_color_g = cond(iCond).bar_color_g;
+                    tuple.bar_color_b = cond(iCond).bar_color_b;
+                    tuple.is_init = cond(iCond).is_init;
+                    tuple.is_stop = cond(iCond).is_stop;
+                    self.insert(tuple)
                 end
             end
-            %!!! compute missing fields for key here
-            self.insert(tuples)
         end
     end
 end
+

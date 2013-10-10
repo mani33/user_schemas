@@ -1,5 +1,5 @@
 % fle.Phys - my newest table
-% I will explain what my table does here 
+% I will explain what my table does here
 
 %{
 fle.Phys (computed) # my newest table
@@ -8,19 +8,20 @@ fle.Phys (computed) # my newest table
 -----
 %}
 
-classdef Phys < dj.Relvar
-
-	properties(Constant)
-		table = dj.Table('fle.Phys')
+classdef Phys < dj.Relvar & dj.AutoPopulate
+    
+    properties(Constant)
+        table = dj.Table('fle.Phys')
+        popRel = ephys.Spikes * fle.TrialGroup
     end
-	methods
-		function self = Phys(varargin)
-			self.restrict(varargin)
-		end
-
-		function makeTuples(self, key)
-            tuples = fetch(ephys.Spikes(key) * fle.TrialGroup(key));            
-            self.insert(tuples);            
-		end
-	end
+    methods
+        function self = Phys(varargin)
+            self.restrict(varargin)
+        end
+    end
+    methods (Access=protected)
+        function makeTuples(self, key)
+            self.insert(key);
+        end
+    end
 end

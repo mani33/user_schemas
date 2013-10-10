@@ -11,10 +11,9 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
         table = dj.Table('fle.TrialGroup')
-       
-        popRel = (stimulation.StimTrialGroup - acq.StimulationIgnore) & ephys.Spikes &...
-            acq.Stimulation('exp_type like ''FlePhys%Experiment'' and correct_trials >= 300')...
-            - acq.SessionsIgnore;
+        popRel = (stimulation.StimTrialGroup - acq.StimulationIgnore) &...
+            acq.Stimulation('exp_type like "FlePhys%Experiment" and correct_trials >= 300')...
+            - acq.SessionsIgnore
     end
     
     methods
@@ -22,30 +21,34 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
             self.restrict(varargin)
         end
     end
-    methods(Access=protected)
+    methods(Access = protected)
         function makeTuples(self, key)
             %!!! compute missing fields for key here
             self.insert(key)
             % Populate subtables
-            makeTuples(fle.Phys,key)
+%             makeTuples(fle.Phys,key)
             makeTuples(fle.StimCond,key)
             makeTuples(fle.StimConstants,key)
             makeTuples(fle.DxVals,key)
+            makeTuples(fle.BarGrayLevels,key)
             makeTuples(fle.SubTrials,key)
             
         end
     end
     methods
-        function [zeroTimePoint misAlignPixUsed] = getTrajRelTimeAtFlashLoc(self,flashLocation,dx,direction,misAlignTol)
+        function [zeroTimePoint misAlignPixUsed movCond] = getTrajRelTimeAtFlashLoc(self,flashLocation,...
+                dx,direction,barLum,motionType)
+            %             function [zeroTimePoint misAlignPixUsed] = getTrajRelTimeAtFlashLoc(self,flashLocation,...
+            %                     dx,direction,barLum,motionType)
+            % input 'motionType' should be 'cont','init' or 'stop'.
             
             if isnan(flashLocation)
                 zeroTimePoint = NaN;
                 return;
             end
-            if nargin < 5
-                misAlignTol = 0;
-            end
-            
+            misAlignTol = 0;
+            movCond = [];
+            misAlignPixUsed = 0;
             zeroTimePoint = nan;
             
             % Get the condition index for the moving bar
@@ -54,25 +57,53 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
             
             if ~any([c.dx]==dx)
                 return
-            end 
-            
-            movCond = find([c.is_moving] & [c.dx]==dx & [c.direction]==direction,1);
-            flashCond = find([c.flash_location] == flashLocation,1);
+            end
+            T = fetch1(vstim.RefreshPeriod(self),'refresh_period_msec');
             sc = fetch(fle.StimConstants(key), 'stim_center_x');
-            % Get one subTrial with this condition
+            flashCond = find([c.bar_color_r]==barLum & [c.is_flash] & [c.flash_location]== flashLocation,1);
             
-            md = fetch(fle.SubTrials(key,sprintf('cond_idx = %u',movCond)),'bar_locations',1);
+            switch motionType
+                case 'cont'
+                    allMovCond = find([c.bar_color_r]==barLum & ~[c.is_flash] & [c.is_moving]...
+                        & [c.dx]==dx & [c.direction]==direction & ~[c.is_init] & ~[c.is_stop]);
+                case 'init'
+                    % All the init conditions - there will be many of them
+                    allMovCond = find([c.bar_color_r]==barLum & ~[c.is_flash] & [c.is_moving]...
+                        & [c.dx]==dx & [c.direction]==direction & [c.is_init] & ~[c.is_stop]);
+                case 'stop'
+                    allMovCond = find([c.bar_color_r]==barLum & ~[c.is_flash] & [c.is_moving]...
+                        & [c.dx]==dx & [c.direction]==direction & ~[c.is_init] & [c.is_stop]);
+                otherwise
+                    error('unknown motion type')
+            end
+            
             fd = fetch(fle.SubTrials(key,sprintf('cond_idx = %u',flashCond)),'flash_centers',1);
+            % Choose the condition where motion started from or ended at the rf center
+            % location
+            nMovCond = length(allMovCond);
+            for iMovCond = 1:nMovCond
+                movCond = allMovCond(iMovCond);
+                % Get one subTrial with this condition
+                md = fetch(fle.SubTrials(key,sprintf('cond_idx = %u',movCond)),'bar_locations',1);
+                movBarLoc = md.bar_locations{:};
+                flashLoc = fd.flash_centers{:}(1) - sc.stim_center_x;
+                switch motionType
+                    case 'cont'
+                        alignFrameInd = find(movBarLoc==flashLoc);
+                    case 'init'
+                        alignFrameInd = find(movBarLoc(1)==flashLoc);
+                    case 'stop'
+                        alignFrameInd = find(movBarLoc(end)==flashLoc);
+                    otherwise
+                        error('Unknown motion type !')
+                end
+                if ~isempty(alignFrameInd)
+                    break
+                end
+            end
             
-            T = fetch1(fle.RefreshPeriod(self),'refresh_period_msec'); 
-            movBarLoc = md.bar_locations{:};
-            flashLoc = fd.flash_centers{:}(1) - sc.stim_center_x;
-            
-            alignFrameInd = find(movBarLoc==flashLoc);
-            misAlignPixUsed = 0;
             if isempty(alignFrameInd)
-                if misAlignTol > 0
-                    
+                if strcmp(motionType,'cont') && misAlignTol > 0                    
                     % randomly choose a moving location closest to the flashed location
                     r = rand(1);
                     if r < 0.5
@@ -88,6 +119,7 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
                     if isempty(alignFrameInd)
                         es = sprintf('The misAlignTol used did not find a close match between flash and moving bar\n');
                         disp(es);
+                        return
                     end
                 else
                     return
@@ -95,7 +127,7 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
             end
             zeroTimePoint = (alignFrameInd - 1) * T;
         end
-               
+        
         function arr = getStimCenProxArrForCond(self,condIdx1Array,barType)
             % function arr = getStimCenProxArrForCond(self,condIdx1Array,barType)
             %   getStimCenProxArrForCond(self,condIdx1Array,'moving')
@@ -178,63 +210,76 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
         end
         
         function [condIdx condStr] = getSelCond(self,varargin)
-            arg.direction = [0 1];
-            arg.dx = [];
-            arg.arg.barTypes = {'flash','moving'};
-            arg.rfCond = true;
+            args.direction = [0 1];
+            args.dx = [];
+            args.bar_gray_level = 255;
+            args.is_init = false;
+            args.is_stop = false;
+            args.barTypes = {'flash','moving'};
+            args.rfCond = true;
             
-            arg = parseVarArgs(arg,varargin{:});
+            args = parseVarArgs(args,varargin{:});
             
             key = fetch(self);
-            cond = fetch(fle.StimCond(key),'*');
+            qs = sprintf('is_init = %u and is_stop = %u and bar_color_r = %u',args.is_init,args.is_stop,args.bar_gray_level);
+            cond = fetch(fle.StimCond(key,qs),'*');
             
-            if isempty(arg.dx)
+            % Need to add flash conditions separately
+            flashOnlyCond = [];
+            if args.is_init || args.is_stop
+                qs = sprintf('is_flash = 1 and bar_color_r = %u',args.bar_gray_level);
+                flashOnlyCond = fetch(fle.StimCond(key,qs),'*');
+            end
+            cond = cat(1,cond,flashOnlyCond);
+            
+            if isempty(args.dx)
                 dx = unique([cond.dx]);
-                arg.dx = dx(~isnan(dx));
+                args.dx = dx(~isnan(dx));
             end
             
-            if ischar(arg.arg.barTypes)
-                arg.arg.barTypes = {arg.arg.barTypes};
+            if ischar(args.barTypes)
+                args.barTypes = {args.barTypes};
             end
             stimTypes = {'flash','moving'};
             
             comb = fetch1(fle.StimConstants(key),'combined');
-            if arg.combinedStim && comb==0
-                arg.combinedStim = false;
+            if args.combinedStim && comb==0
+                args.combinedStim = false;
                 fprintf('The requested session is not a combined session; using single stim conditions instead!\n');
             end
             
-            
-            if  arg.combinedStim == 0 % single stimulus in subtrial condition
+            if  args.combinedStim == 0 % single stimulus in subtrial condition
                 
                 % Flashes
                 allFlashOnlyCond = [cond.is_flash] & ~[cond.is_moving];
-                rfInArr = getStimCenProxArrForCond(self,find(allFlashOnlyCond,1),'flash');
-                rfInCond = find(allFlashOnlyCond & [cond.arrangement]==rfInArr);
-                rfOutCond = find(allFlashOnlyCond & [cond.arrangement]~=rfInArr);
+                rfInArr = fetch1(fle.StimCenProxCond(self,sprintf('cond_idx = %u',cond(find(allFlashOnlyCond,1)).cond_idx)),'arr_rf_in');
+                rfInCond = [cond(allFlashOnlyCond & [cond.arrangement]==rfInArr).cond_idx];
+                rfOutCond = [cond(allFlashOnlyCond & [cond.arrangement]~=rfInArr).cond_idx];
                 flashCond = [rfInCond rfOutCond];
                 flashCondStr = [ repmat({'flash-inRf-single'},1,length(rfInCond)),...
                     repmat({'flash-outRf-single'},1,length(rfOutCond))];
                 
                 % Moving bars
                 allMovOnlyCond = ~[cond.is_flash] & [cond.is_moving] & ...
-                    ismember([cond.dx],arg.dx) & ismember([cond.direction],arg.direction);
-                rfInArr = getStimCenProxArrForCond(self,find(allMovOnlyCond,1),'moving');
-                rfInCond = find(allMovOnlyCond & [cond.arrangement]==rfInArr);
-                rfOutCond = find(allMovOnlyCond & [cond.arrangement]~=rfInArr);
-                movCond = [rfInCond rfOutCond];
-                movCondStr = [ repmat({'mov-inRf-single'},1,length(rfInCond)),...
-                    repmat({'mov-outRf-single'},1,length(rfOutCond))];
+                    ismember([cond.dx],args.dx) & ismember([cond.direction],args.direction);
+                rfInArr = fetch1(fle.StimCenProxCond(self,sprintf('cond_idx = %u',cond(find(allMovOnlyCond,1)).cond_idx)),'arr_rf_in');
+                rfInCond0 = [cond(allMovOnlyCond & [cond.arrangement]==rfInArr & [cond.direction]==0).cond_idx];
+                rfInCond1 = [cond(allMovOnlyCond & [cond.arrangement]==rfInArr & [cond.direction]==1).cond_idx];
+                rfOutCond0 = [cond(allMovOnlyCond & [cond.arrangement]~=rfInArr & [cond.direction]==0).cond_idx];
+                rfOutCond1 = [cond(allMovOnlyCond & [cond.arrangement]~=rfInArr & [cond.direction]==1).cond_idx];
+                movCond = [rfInCond0 rfInCond1 rfOutCond0 rfOutCond1];
+                movCondStr = [ repmat({'mov-inRf-single-LR'},1,length(rfInCond0)),repmat({'mov-inRf-single-RL'},1,length(rfInCond1))...
+                    repmat({'mov-outRf-single-LR'},1,length(rfOutCond0)),repmat({'mov-outRf-single-RL'},1,length(rfOutCond1))];
                 
                 allCond = [flashCond movCond];
                 allCondStr = [flashCondStr movCondStr];
-            elseif arg.combinedStim == 1
+            elseif args.combinedStim == 1
                 % Flashes
                 allFlashCond = [cond.is_flash] & [cond.is_moving] & ...
-                    ismember([cond.dx],arg.dx) & ismember([cond.direction],arg.direction);
-                rfInArr = getStimCenProxArrForCond(self,find(allFlashCond,1),'flash');
-                rfInCond = find(allFlashCond & [cond.arrangement]==rfInArr);
-                rfOutCond = find(allFlashCond & [cond.arrangement]~=rfInArr);
+                    ismember([cond.dx],args.dx) & ismember([cond.direction],args.direction);
+                rfInArr = fetch1(fle.StimCenProxCond(self,sprintf('cond_idx = %u',cond(find(allFlashCond,1)).cond_idx)),'arr_rf_in');
+                rfInCond = [cond(allFlashCond & [cond.arrangement]==rfInArr).cond_idx];
+                rfOutCond = [cond(allFlashCond & [cond.arrangement]~=rfInArr).cond_idx];
                 flashCond = [rfInCond rfOutCond];
                 flashCondStr = [ repmat({'flash-inRf-comb'},1,length(rfInCond)),...
                     repmat({'flash-outRf-comb'},1,length(rfOutCond))];
@@ -242,10 +287,10 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
                 % Moving bars
                 
                 allMovCond = [cond.is_flash] & [cond.is_moving] & ...
-                    ismember([cond.dx],arg.dx) & ismember([cond.direction],arg.direction);
-                rfInArr = getStimCenProxArrForCond(self,find(allMovCond,1),'moving');
-                rfInCond = find(allMovCond & [cond.arrangement]==rfInArr);
-                rfOutCond = find(allMovCond & [cond.arrangement]~=rfInArr);
+                    ismember([cond.dx],args.dx) & ismember([cond.direction],args.direction);
+                rfInArr = fetch1(fle.StimCenProxCond(self,sprintf('cond_idx = %u',cond(find(allMovCond,1)).cond_idx)),'arr_rf_in');
+                rfInCond = [cond(allMovCond & [cond.arrangement]==rfInArr).cond_idx];
+                rfOutCond = [cond(mov_cond_idx(allMovCond & [cond.arrangement]~=rfInArr)).cond_idx];
                 movCond = [rfInCond rfOutCond];
                 movCondStr = [ repmat({'mov-inRf-comb'},1,length(rfInCond)),...
                     repmat({'mov-outRf-comb'},1,length(rfOutCond))];
@@ -256,41 +301,41 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
                 error('Combining combined and single conditions not implemented yet!');
             end
             
-            if arg.rfCond == -1 % get conditions where stim was inside or outside rf
+            if args.rfCond == -1 % get conditions where stim was inside or outside rf
                 
-                if all(ismember(stimTypes,arg.barTypes))
+                if all(ismember(stimTypes,args.barTypes))
                     sel = 1:length(allCond);
-                elseif any(ismember(arg.barTypes,'flash'))
+                elseif any(ismember(args.barTypes,'flash'))
                     sel = ismember(allCondStr,{ 'flash-inRf-single','flash-outRf-single',...
                         'flash-inRf-comb','flash-outRf-comb'});
-                elseif any(ismember(arg.barTypes,'moving'))
-                    sel = ismember(allCondStr,{ 'mov-inRf-single','mov-outRf-single',...
-                        'mov-inRf-comb','mov-outRf-comb'});
+                elseif any(ismember(args.barTypes,'moving'))
+                    sel = ismember(allCondStr,{ 'mov-inRf-single-LR','mov-inRf-single-RL','mov-outRf-single-LR',...
+                        'mov-outRf-single-RL','mov-inRf-comb','mov-outRf-comb'});
                 else
-                    error('arg.barTypes should be ''moving'' and/or ''flash''');
+                    error('args.barTypes should be ''moving'' and/or ''flash''');
                 end
                 
-            elseif arg.rfCond == 1
-                if all(ismember(stimTypes,arg.barTypes))
+            elseif args.rfCond == 1
+                if all(ismember(stimTypes,args.barTypes))
                     sel = ismember(allCondStr,{'flash-inRf-single','mov-inRf-comb',...
-                        'flash-inRf-comb','mov-inRf-single'});
-                elseif any(ismember(arg.barTypes,'flash'))
+                        'flash-inRf-comb','mov-inRf-single-LR','mov-inRf-single-RL'});
+                elseif any(ismember(args.barTypes,'flash'))
                     sel = ismember(allCondStr,{'flash-inRf-single','flash-inRf-comb'});
-                elseif any(ismember(arg.barTypes,'moving'))
-                    sel = ismember(allCondStr,{'mov-inRf-single','mov-inRf-comb'});
+                elseif any(ismember(args.barTypes,'moving'))
+                    sel = ismember(allCondStr,{'mov-inRf-single-LR','mov-inRf-single-RL','mov-inRf-comb'});
                 else
-                    error('arg.barTypes should be ''moving'' and/or ''flash''');
+                    error('args.barTypes should be ''moving'' and/or ''flash''');
                 end
-            elseif arg.rfCond == 0
-                if all(ismember(stimTypes,arg.barTypes))
+            elseif args.rfCond == 0
+                if all(ismember(stimTypes,args.barTypes))
                     sel = ismember(allCondStr,{'flash-outRf-single','mov-outRf-comb',...
-                        'flash-outRf-comb','mov-outRf-single'});
-                elseif any(ismember(arg.barTypes,'flash'))
+                        'flash-outRf-comb','mov-outRf-single-LR','mov-outRf-single-RL'});
+                elseif any(ismember(args.barTypes,'flash'))
                     sel = ismember(allCondStr,{'flash-outRf-single','flash-outRf-comb'});
-                elseif any(ismember(arg.barTypes,'moving'))
-                    sel = ismember(allCondStr,{'mov-outRf-single','mov-outRf-comb'});
+                elseif any(ismember(args.barTypes,'moving'))
+                    sel = ismember(allCondStr,{'mov-outRf-single-LR','mov-outRf-single-RL','mov-outRf-comb'});
                 else
-                    error('arg.barTypes should be ''moving'' and/or ''flash''');
+                    error('args.barTypes should be ''moving'' and/or ''flash''');
                 end
             end
             condIdx = allCond(sel);
