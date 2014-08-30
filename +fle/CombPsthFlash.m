@@ -82,7 +82,10 @@ classdef CombPsthFlash < dj.Relvar & dj.AutoPopulate
                                 cs = sprintf('cond_idx = %u',flash_cond(iFlash));
                                 skeys = fetch(fle.SubTrials(key,cs)-fle.SubTrialsIgnore);
                                 [flash_on, stim_on, stim_off,trialSpikes{iFlash}] = fetchn(fle.CombinedFlashOnset(skeys) * fle.SubTrials(skeys)...
-                                    * fle.SubTrialSpikes(key,skeys),'onset','substim_on','substim_off','spike_times');
+                                    * fle.SubTrialSpikes(key,skeys),'t','substim_on','substim_off','spike_times');
+                                flash_on = double(flash_on);
+                                stim_on = double(stim_on);
+                                stim_off = double(stim_off);
                                 tmp.rel_flash_on{iFlash} = flash_on-stim_on;
                                 tmp.stim_time(iFlash) = median(stim_off-stim_on);
                                 [tmp.bar_cen_deg(iFlash),tmp.bar_cen_pix(iFlash)] = fetch1(fle.RelFlashCenX(key,cs),'rel_to_mon_cen_deg','rel_to_mon_cen_pix');

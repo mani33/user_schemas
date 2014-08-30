@@ -23,15 +23,19 @@ classdef BinTrialResp < dj.Relvar & dj.AutoPopulate
     
 	methods(Access=protected)
 
-		function makeTuples(self, key)
-            spk = fetch1(fle.SubTrialSpikes(key),'spike_times');
-            [bc, bw] = fetch1(fle.BinTimesByCond(key),'t','bw_t');
-            % Make bin edges so that the bin times correspond to bin centers
-            bin_edges = cat(1,bc-bw/2, bc(end)+bw/2);
-            sc = histc(spk,bin_edges);
-            sc = sc(1:end-1);
-            key.spike_counts = sc(:); 
-			self.insert(key)
+		function makeTuples(self, keys)
+            nKeys  = length(keys);
+            for iKey = 1:nKeys
+                key = keys(iKey);
+                spk = fetch1(fle.SubTrialSpikes(key),'spike_times');
+                [bc, bw] = fetch1(fle.BinTimesByCond(key),'t','bw_t');
+                % Make bin edges so that the bin times correspond to bin centers
+                bin_edges = cat(1,bc-bw/2, bc(end)+bw/2);
+                sc = histc(spk,bin_edges);
+                sc = sc(1:end-1);
+                keys(iKey).spike_counts = sc(:);
+            end
+			self.insert(keys)
 		end
 	end
 end

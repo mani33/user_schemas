@@ -25,7 +25,7 @@ classdef Fit < dj.Relvar & dj.AutoPopulate
         function makeTuples(self, key)
             
             map = fetch1(rf.Map(key),'map');
-            [xGrid yGrid] = getGrid(rf.Map(key),'deg');
+            [xGrid, yGrid] = getGrid(rf.Map(key),'deg');
             
             % apply smoothing
             n = 5;

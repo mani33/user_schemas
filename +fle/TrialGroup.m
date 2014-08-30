@@ -36,7 +36,7 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
         end
     end
     methods
-        function [zeroTimePoint misAlignPixUsed movCond] = getTrajRelTimeAtFlashLoc(self,flashLocation,...
+        function [zeroTimePoint, misAlignPixUsed, movCond] = getTrajRelTimeAtFlashLoc(self,flashLocation,...
                 dx,direction,barLum,motionType)
             %             function [zeroTimePoint misAlignPixUsed] = getTrajRelTimeAtFlashLoc(self,flashLocation,...
             %                     dx,direction,barLum,motionType)
@@ -252,7 +252,7 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
                 
                 % Flashes
                 allFlashOnlyCond = [cond.is_flash] & ~[cond.is_moving];
-                rfInArr = fetch1(fle.StimCenProxCond(self,sprintf('cond_idx = %u',cond(find(allFlashOnlyCond,1)).cond_idx)),'arr_rf_in');
+                rfInArr = fetch1(fle.StimCenProxCond(fetch(self),sprintf('cond_idx = %u',cond(find(allFlashOnlyCond,1)).cond_idx)),'arr_rf_in');
                 rfInCond = [cond(allFlashOnlyCond & [cond.arrangement]==rfInArr).cond_idx];
                 rfOutCond = [cond(allFlashOnlyCond & [cond.arrangement]~=rfInArr).cond_idx];
                 flashCond = [rfInCond rfOutCond];
@@ -262,7 +262,7 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
                 % Moving bars
                 allMovOnlyCond = ~[cond.is_flash] & [cond.is_moving] & ...
                     ismember([cond.dx],args.dx) & ismember([cond.direction],args.direction);
-                rfInArr = fetch1(fle.StimCenProxCond(self,sprintf('cond_idx = %u',cond(find(allMovOnlyCond,1)).cond_idx)),'arr_rf_in');
+                rfInArr = fetch1(fle.StimCenProxCond(fetch(self),sprintf('cond_idx = %u',cond(find(allMovOnlyCond,1)).cond_idx)),'arr_rf_in');
                 rfInCond0 = [cond(allMovOnlyCond & [cond.arrangement]==rfInArr & [cond.direction]==0).cond_idx];
                 rfInCond1 = [cond(allMovOnlyCond & [cond.arrangement]==rfInArr & [cond.direction]==1).cond_idx];
                 rfOutCond0 = [cond(allMovOnlyCond & [cond.arrangement]~=rfInArr & [cond.direction]==0).cond_idx];
@@ -277,7 +277,7 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
                 % Flashes
                 allFlashCond = [cond.is_flash] & [cond.is_moving] & ...
                     ismember([cond.dx],args.dx) & ismember([cond.direction],args.direction);
-                rfInArr = fetch1(fle.StimCenProxCond(self,sprintf('cond_idx = %u',cond(find(allFlashCond,1)).cond_idx)),'arr_rf_in');
+                rfInArr = fetch1(fle.StimCenProxCond(fetch(self),sprintf('cond_idx = %u',cond(find(allFlashCond,1)).cond_idx)),'arr_rf_in');
                 rfInCond = [cond(allFlashCond & [cond.arrangement]==rfInArr).cond_idx];
                 rfOutCond = [cond(allFlashCond & [cond.arrangement]~=rfInArr).cond_idx];
                 flashCond = [rfInCond rfOutCond];
@@ -288,7 +288,7 @@ classdef TrialGroup < dj.Relvar & dj.AutoPopulate
                 
                 allMovCond = [cond.is_flash] & [cond.is_moving] & ...
                     ismember([cond.dx],args.dx) & ismember([cond.direction],args.direction);
-                rfInArr = fetch1(fle.StimCenProxCond(self,sprintf('cond_idx = %u',cond(find(allMovCond,1)).cond_idx)),'arr_rf_in');
+                rfInArr = fetch1(fle.StimCenProxCond(fetch(self),sprintf('cond_idx = %u',cond(find(allMovCond,1)).cond_idx)),'arr_rf_in');
                 rfInCond = [cond(allMovCond & [cond.arrangement]==rfInArr).cond_idx];
                 rfOutCond = [cond(mov_cond_idx(allMovCond & [cond.arrangement]~=rfInArr)).cond_idx];
                 movCond = [rfInCond rfOutCond];

@@ -69,7 +69,8 @@ classdef Map < dj.Relvar
                     ctd = td(iTrial);
                     % stim event times are stored as bigint so we round the swap times which
                     % are stored as doubles.
-                    ctd.swap_times = round(ctd.swap_times);
+                    ctd.stim_on = double(ctd.stim_on);
+                    ctd.stim_off = double(ctd.stim_off);
                     % get spikes
                     interval = [lag, ctd.stim_off-ctd.stim_on + lag];
                     spkTimes = sdata([sdata.trial_num]==ctd.trial_num).spike_times;
@@ -77,7 +78,8 @@ classdef Map < dj.Relvar
                     spikes{iTrial} = reshape(spkTimes-lag,1,[]);
                     
                     % extract swap times
-                    firstSwap = find(ctd.swap_times == ctd.stim_on);
+                    [mv,firstSwap] = min(abs(ctd.swap_times-ctd.stim_on));
+                    assert(mv<=1,'no swap time found that is within 1 ms of stim_on time')
                     lastSwap = find(ctd.swap_times <= ctd.stim_off,1,'last');
                     times{iTrial} = reshape(ctd.swap_times(firstSwap:lastSwap),1,[]);
                     if stimFrames > 1
@@ -213,9 +215,9 @@ classdef Map < dj.Relvar
             
             % get all map data
             md = fetch(self,'*');
-            
+            assert(length(md)==1,sprintf('You supplied %u tuples; only one is allowed',length(md)))
             % get grid
-            [x y] = getGrid(self,arg.units);
+            [x, y] = getGrid(self,arg.units);
             
             if ~isempty(arg.axis)
                 axes(arg.axis)

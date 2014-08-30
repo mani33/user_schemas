@@ -23,9 +23,10 @@ classdef TrialSpikes < dj.Relvar
             spikeTrain = fetch1(ephys.Spikes(key),'spike_times');
             
             % Find stim on/off times for all subtrials in the given session (=key)
-            [onsets offsets trialNums] = fetchn(rf.Trials(key),'stim_on','stim_off',...
+            [onsets, offsets, trialNums] = fetchn(rf.Trials(key),'stim_on','stim_off',...
                 'trial_num');
-            
+            onsets = double(onsets);
+            offsets = double(offsets);
             nTrials = length(onsets);
             keys = repmat(key,1,nTrials);
             tStart = onsets - key.pre_stim_time;

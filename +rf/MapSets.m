@@ -69,12 +69,17 @@ classdef MapSets < dj.Relvar & dj.AutoPopulate
         function fn = get_tit(self)
             ekey = fetch(self);
             subj = fetch1(acq.Subjects(ekey),'subject_name');
-            vis = fetch1(sess.ElecLoc(ephys.Spikes(ekey)),'vis_area_num');
+            vis = fetch(sess.ElecLoc(ephys.Spikes(ekey)),'vis_area_num');
+            if isempty(vis)
+                vis = '?';
+            else
+                vis = num2str(fetch1(sess.ElecLoc(ephys.Spikes(ekey)),'vis_area_num'));
+            end
             elec = fetch1(ephys.Spikes(ekey),'electrode_num');
             ut = {'multi-unit','single-unit'};
             utype = ut{ekey.sort_method_num - 3};
             sessdt = getDateStrFromPathStr(fetch1(acq.Sessions(ekey),'session_path'));
-            fn = sprintf('%s_V%u_elec_%u_unit_id_%u_%s_%s',subj, vis, elec, ekey.unit_id, utype,sessdt);
+            fn = sprintf('%s V%s Elec = %u unit_id = %u %s %s',subj, vis, elec, ekey.unit_id, utype,sessdt);
         end
     end
 end

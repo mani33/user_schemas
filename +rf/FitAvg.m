@@ -167,11 +167,12 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             arg.pause = false;
             arg.show_tit = true;
             arg.showRfCen = true;
-            arg.titStr = [];
+            arg.tit_str = [];
             arg.axisLim = [];
             arg.axisFontSize = 6;
-            arg.manuscript = true;
+            arg.manuscript = false;
             arg.FontSize = 8;
+            arg.tit_font_size = 5;
             arg.FontName = 'Helvetica';
             arg.outlineColor = 'k';
             arg.showCardinal = true;
@@ -183,15 +184,16 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             
             % get all map data
             key = fetch(self);
-            
-            arg.titStr = sprintf('%u',key.unit_id);
+            if isempty(arg.tit_str)
+                arg.tit_str = sprintf('%u',key.unit_id);
+            end
             % Get title string
             [elecNum, unitId] = fetch1(ephys.Spikes(key),'electrode_num','unit_id');
             if arg.show_tit
                 sessPath = fetch1(acq.Sessions(key),'session_path');
                 [~,spStr] = fileparts(sessPath);
-                if isempty(arg.titStr)
-                    arg.titStr = [spStr sprintf('  elec: %u unit_id: %u',elecNum,unitId)];
+                if isempty(arg.tit_str)
+                    arg.tit_str = [spStr sprintf('  elec: %u unit_id: %u',elecNum,unitId)];
                 end
             end
             md = fetch(rf.MapAvg(key),'*');
@@ -214,23 +216,12 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
                 hold on
             end
             
-            %                 if size(map,1)==size(map,2)
-            %                     PlotTools.sqAx;
-            %                 end
-            
-            %             if ~arg.outlineOnly
-            % %                 % plot meridians
-            % %                 plot(xlim,[0 0],'w');
-            % %                 plot([0 0],ylim,'w');
-            % %                 hold on
-            %             end
             % Plot outline of receptive field now.
             [ox, oy] = getOutline(self & key,arg.mahalDist);
             if ~arg.outlineOnly
                 plot(ox,oy,'Color',arg.outlineColor,'linewidth',arg.LineWidth);
             else
                 plot(ox,oy,'Color',arg.outlineColor,'linewidth',arg.LineWidth);
-                %                     set(gca,'YTickLabel',-get(gca,'YTick'));
             end
             %                 axis image
             if ~isempty(arg.axisLim)
@@ -240,9 +231,9 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             
             if arg.show_tit
                 if arg.manuscript
-                    mtitle(arg.titStr)
+                    mtitle(arg.tit_str)
                 else
-                    title(arg.titStr)
+                    title(arg.tit_str,'FontSize',arg.tit_font_size)
                 end
                 
             end
@@ -256,13 +247,7 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
                 text(cx+0.01,cy,sprintf('%u',elecNum))
             end
             
-%             if arg.showCardinal
-%                 plot([0 0],ylim,'Color','w','linewidth',0.5)
-%                 plot(xlim,[0 0],'Color','w','linewidth',0.5)
-%             end
-            
-%             set(gca,'XAxisLocation','top','YTickLabel',-get(gca,'YTick'),'Box','Off')
-            
+           
             set(gca,'XAxisLocation','top');
             if ~arg.labels_off
                 if arg.manuscript
@@ -275,7 +260,8 @@ classdef FitAvg < dj.Relvar & dj.AutoPopulate
             end
            colormap hot
             if arg.colorbar
-                colorbar
+                colorbar('FontSize',arg.FontSize,'FontName',arg.FontName)
+                
             end
             if nargout
                 varargout{1} = gca;

@@ -28,7 +28,8 @@ classdef SubTrialSpikes < dj.Relvar
             % Find stim on/off times for all subtrials in the given session (=key)
             [onsets, offsets, subtrialNums] = fetchn(fle.SubTrials(key),'substim_on','substim_off',...
                 'subtrial_num');
-            
+            onsets = double(onsets);
+            offsets = double(offsets);
             nSubTrials = length(onsets);
             keys = repmat(key,1,nSubTrials);
             tStart = onsets - key.pre_stim_time;
@@ -100,7 +101,7 @@ classdef SubTrialSpikes < dj.Relvar
             stimTime = sub.substim_off - sub.substim_on;
             
             if any(strcmp(args.plot_type,{'sdf','hist','raster-sdf'}))
-                tot_time = -args.resp_start_time + stimTime + postStimTime(1)-args.t0;
+                tot_time = double(-args.resp_start_time + stimTime + postStimTime(1)-args.t0);
                 bin_edges = args.resp_start_time:args.bin_width:tot_time;
                 bin_cen = bin_edges(1:end-1) + args.bin_width/2;
                 hc = histc(spikes,bin_edges);

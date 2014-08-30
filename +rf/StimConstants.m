@@ -86,10 +86,6 @@ classdef StimConstants < dj.Relvar
                     if length(uval)== 1
                         key.(djParams{iParam}) = uval;
                     else
-%                         uvalRep = arrayfun(@(x) length(find(val==x)), uval);
-%                         [~, ind] = max(uvalRep);
-%                         selVal = uval(ind);
-%                         key.(djParams{iParam}) = selVal;
                         error('%s is not same on all trials. Go and fix the original stim structure \nobtained in the DotMappingExperiment so that all trials have the same \nstimulus params, then import it into stimulation.StimTrialGroup table\n and visit this table again',cparam);
                     end
                 end

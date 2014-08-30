@@ -3,7 +3,7 @@ fle.CombinedFlashOnset (computed) # Flash onset time when moving was also presen
 
 -> fle.SubTrials
 ---
-onset                       : double                        # flash onset time in msec
+t                       : double                        # flash onset time in msec
 %}
 
 classdef CombinedFlashOnset < dj.Relvar & dj.AutoPopulate
@@ -31,9 +31,9 @@ classdef CombinedFlashOnset < dj.Relvar & dj.AutoPopulate
             
             switch mon_type
                 case 'LCD'
-                    key.onset = traj_t(s.bar_locations{:} == s.flash_locations{:});
+                    key.t = traj_t(s.bar_locations{:} == s.flash_locations{:});
                 case 'CRT'
-                    key.onset = traj_t(s.bar_locations{:} == 0);
+                    key.t = traj_t(s.bar_locations{:} == 0);
                 otherwise
                     error('unknown monitor type')
             end

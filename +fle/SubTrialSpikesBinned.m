@@ -28,7 +28,8 @@ classdef SubTrialSpikesBinned < dj.Relvar
             % Find stim on/off times for all subtrials in the given session (=key)
             [onsets, offsets, subtrialNums] = fetchn(fle.SubTrials(key),'substim_on','substim_off',...
                 'subtrial_num');
-            
+            onsets = double(onsets);
+            offsets = double(offsets);
             tStart = onsets - key.pre_stim_time;
             tEnd = offsets + key.post_stim_time;
             winSizes = tEnd-tStart;

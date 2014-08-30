@@ -1,41 +1,33 @@
 %{
-fle.MovStats (computed) # my newest table
+fle.MovRespProp (computed) # my newest table
 -> fle.BarGrayLevels
 -> fle.SpikeSets
 -> fle.MovStatParams
 -> fle.DxVals
 -----
+base_mean_0 = 0: double # base firing rate
+base_std_0 = 0: double # blah
+resp_peak_0 = 0: double # max firing rate at the response window
+base_mean_1 = 0: double # base firing rate
+base_std_1 = 0: double # blah
+resp_peak_1 = 0: double # max firing rate at the response window
 
-responsive_0 = 0: boolean # is the neuron visually responsive for direction 0
-inhib_0 = 0: boolean # blah
-excit_0 = 0: boolean # blah
-base_fr_0 = 0: double # base firing rate
-resp_fr_0 = 0: double # firing rate at the response window
-p_0 = 1: double # least p-value after Bonferroni correction
-responsive_1 = 0: boolean # is the neuron visually responsive
-inhib_1 = 0: boolean # blah
-excit_1 = 0: boolean # blah
-base_fr_1 = 0: double # base firing rate
-resp_fr_1 = 0: double # firing rate at the response window
-p_1 = 1: double # least p-value after Bonferroni correction
-
-movstats_ts = CURRENT_TIMESTAMP: timestamp           # automatic timestamp. Do not edit
 %}
 
-classdef MovStats < dj.Relvar & dj.AutoPopulate
+classdef MovRespProp < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
-        table = dj.Table('fle.MovStats')
-        popRel = (fle.BarGrayLevels*fle.SpikeSets*fle.MovStatParams*fle.DxVals) & (fle.Traj | fle.TrajControls)
+        table = dj.Table('fle.MovRespProp')
+        popRel = ((fle.BarGrayLevels*fle.SpikeSets*fle.MovStatParams*fle.DxVals) & (fle.Traj | fle.TrajControls)) ...
+            & fle.PsthByCond
     end
-    
     methods
-        function self = MovStats(varargin)
-            self.restrict(varargin{:})
+        function self = MovRespProp(varargin)
+            self.restrict(varargin)
         end
     end
-    
     methods(Access=protected)
+        
         function makeTuples(self, key)
             nDir = 2;
             d = [0 1];
@@ -61,7 +53,7 @@ classdef MovStats < dj.Relvar & dj.AutoPopulate
                     % center
                     [~,ind] = min(abs(tr.sx - rfc));
                     
-                    % Assume a motion response onset latency 
+                    % Assume a motion response onset latency
                     LAT = 75;
                     t0 = tr.t(ind) + LAT;
                     
@@ -72,30 +64,17 @@ classdef MovStats < dj.Relvar & dj.AutoPopulate
                         continue
                     end
                     cs = sprintf('cond_idx = %u',cond_idx);
+                                        
+                    % Get mean and std of psth during baseline
+                    [mfr,t] = fetch1(fle.PsthByCond(key,cs)*fle.BinTimesByCond(key,cs),'mean_fr','t');
+                    base = mfr(t > bwin(1) & t < bwin(2));
+                    key.(sprintf('base_mean_%u',dir)) = mean(base);
+                    key.(sprintf('base_std_%u',dir)) = std(base);
                     
-                    % Get spike times
-                    trialSpikes = fetchn(fle.SubTrialSpikes(key) & fle.SubTrials(key,cs)-fle.SubTrialsIgnore,'spike_times');
+                    % Find response peak
+                    resp = mfr(t > rwin(1) & t < rwin(2));
+                    key.(sprintf('resp_peak_%u',dir)) = max(resp);
                     
-                    % Get spike counts in baseline and response windows
-                    bsc = cellfun(@(x) length(find(x >= bwin(1) & x < bwin(2))), trialSpikes);
-                    rsc = cellfun(@(x) length(find(x >= rwin(1) & x < rwin(2))), trialSpikes);
-                    
-                    baseFr = mean(bsc)*1000/key.base_win;
-                    respFr = mean(rsc)*1000/key.resp_win;
-                    
-                    key.(sprintf('base_fr_%u',dir)) = baseFr;
-                    key.(sprintf('resp_fr_%u',dir)) = respFr;
-                    
-                    [h,p] = ttest(bsc,rsc);
-                    if ~isnan(h) && h
-                        key.(sprintf('responsive_%u',dir)) = true;
-                        key.(sprintf('p_%u',dir)) = p;
-                        if respFr > baseFr
-                            key.(sprintf('excit_%u',dir)) = true;
-                        else
-                            key.(sprintf('inhib_%u',dir)) = true;
-                        end
-                    end
                 end
             end
             self.insert(key)
@@ -142,4 +121,5 @@ classdef MovStats < dj.Relvar & dj.AutoPopulate
             end
         end
     end
+    
 end

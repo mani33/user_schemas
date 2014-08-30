@@ -3,9 +3,9 @@ fle.UnitsFinal (manual) # For convenience, units selected for the phy fle paper
 -> ephys.Spikes
 -----
 electrode_num : smallint unsigned # electrode number
-hemisphere: enum('Left','Right') # bla
+hemisphere: enum('left','right') # bla
 vis_area=0: boolean # was the electrode in v1 or v2
-multi_speeds = 0: boolean # was there more than one speed
+three_speeds = 0: boolean # was there three speeds
 multi_lum = 0: boolean # was there more than one bar luminance
 combined = 0: boolean # flash and motion presented together
 init = 0: boolean # flash-initiated condition?

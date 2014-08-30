@@ -13,7 +13,9 @@ classdef BinTimesByCond < dj.Relvar & dj.AutoPopulate
     
     properties(Constant)
         table = dj.Table('fle.BinTimesByCond')
-        popRel = (fle.SpikeWinParams * fle.StimCond('not (is_flash = 1 and is_moving = 1)') * ...
+%         popRel = (fle.SpikeWinParams * fle.StimCond('not (is_flash = 1 and is_moving = 1)') * ...
+%             fle.Bw) & fle.TrajTimes & vstim.RefreshPeriod & vstim.PixPerDeg  % !!! update the populate relation
+          popRel = (fle.SpikeWinParams * (fle.StimCond & fle.StimCenProxCond('flash_in_rf = 1 or mov_in_rf = 1'))* ...
             fle.Bw) & fle.TrajTimes & vstim.RefreshPeriod & vstim.PixPerDeg  % !!! update the populate relation
     end
     
@@ -35,8 +37,8 @@ classdef BinTimesByCond < dj.Relvar & dj.AutoPopulate
             d = fetch(fle.SubTrials(skeys),'substim_on','substim_off');
             
             % Remove subtrials which do not resemble the majority of the subtrials
-            off = [d.substim_off];
-            on = [d.substim_on];
+            off = double([d.substim_off]);
+            on = double([d.substim_on]);
             r = off - on;
             m = median(r);
             bad = (r > m+T/2 | r < m-T/2);
@@ -64,8 +66,8 @@ classdef BinTimesByCond < dj.Relvar & dj.AutoPopulate
             % Compute bin centers
             % For flash, we will just use bin width based on refresh period
             if fetch1(fle.StimCond(key),'is_flash')
-                postBins = ceil((st + key.post_stim_time)/bw);
-                preBins = ceil(key.pre_stim_time/bw);
+                postBins = double(ceil((st + key.post_stim_time)/bw));
+                preBins = double(ceil(key.pre_stim_time/bw));
                 key.t = (-preBins:postBins)*bw;
             else
                 % Note that for moving stimulus, one extra frame was drawn (fixation spot)

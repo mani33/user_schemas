@@ -44,7 +44,8 @@ classdef PsthMov < dj.Relvar & dj.AutoPopulate
             subRv = fle.SubTrials(key)-fle.SubTrialsIgnore;
             skeys = fetch(subRv);
             [stim_on,traj_abs_times,trialSpikes,bar_centers] = fetchn(fle.SubTrials(skeys)*fle.TrajTimes(skeys)*fle.SubTrialSpikes(key,skeys),'substim_on','t','spike_times','bar_centers');
-            traj_rel_times = cellfun(@(x,on) x - on, traj_abs_times,num2cell(stim_on),'uni',false);
+            stim_on = double(stim_on);
+            traj_rel_times = cellfun(@(x,on) double(x) - on, traj_abs_times,num2cell(stim_on),'uni',false);
             
             % The onset time (the first element of traj_rel_times) may not be exactly
             % zero; but it should be within a msec.

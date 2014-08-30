@@ -67,6 +67,7 @@ classdef Traj < dj.Relvar & dj.AutoPopulate
                                 cond_idx = fetchn(fle.StimCenProxCond(key, cond_str),'cond_idx');
                                 cond_idx = cond_idx(1);
                             else
+                                fle.StimCenProxCond(key, cond_str)
                                 cond_idx = fetch1(fle.StimCenProxCond(key, cond_str),'cond_idx');
                             end
                             cs = sprintf('cond_idx = %u',cond_idx);
@@ -100,7 +101,7 @@ classdef Traj < dj.Relvar & dj.AutoPopulate
                             assert(all(range(bcx,2)==0),'bar center x has got problem')
                             assert(all(range(bcy,2)==0),'bar center y has got problem')
                                                         
-                            assert(all(range(t,2) < 0.3),'time stamps range exceeds 0.3 ms')
+                            assert(all(range(t,2) < 1.1),'time stamps range exceeds 1.1 ms')
                             tuple.t = median(t,2);
                             tuple.sx = (bcx(:,1) - scon.monitor_center_x)/ppd;
                             tuple.sy = (bcy(:,1) - scon.monitor_center_y)/ppd;

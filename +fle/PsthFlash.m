@@ -65,6 +65,8 @@ classdef PsthFlash < dj.Relvar & dj.AutoPopulate
                 cs = sprintf('cond_idx = %u',flash_cond(iFlash));
                 skeys = fetch(fle.SubTrials(key,cs)-fle.SubTrialsIgnore);
                 [stim_on, stim_off, trialSpikes{iFlash}] = fetchn(fle.SubTrials(skeys) * fle.SubTrialSpikes(key,skeys),'substim_on','substim_off','spike_times');
+                stim_on = double(stim_on);
+                stim_off = double(stim_off);
                 assert(round(median((stim_off-stim_on))/T)==1,'Flash was not shown for 1 frame')
                 [tmp.bar_cen_deg(iFlash),tmp.bar_cen_pix(iFlash)] = fetch1(fle.RelFlashCenX(key,cs),'rel_to_mon_cen_deg','rel_to_mon_cen_pix');
             end
